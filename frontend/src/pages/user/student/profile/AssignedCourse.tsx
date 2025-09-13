@@ -1,4 +1,4 @@
-import CommonButton from '@components/buttons/CommonButton';
+import CommonButton, { CommonButtonProps } from '@components/buttons/CommonButton';
 import ShadowCard from '@components/card/ShadowCard';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -46,6 +46,20 @@ export default function AssignedCourse() {
             professor: 'Dr. Taylor'
         }
     ];
+    const buttons: CommonButtonProps[] = [
+        {
+            buttonLabel: 'View Overall Grade',
+            buttonStyle: 'blue',
+            size: 'm',
+            onButtonClick: handleViewOverallGrade
+        },
+        {
+            buttonLabel: 'Enroll Course',
+            buttonStyle: 'blue',
+            size: 'm',
+            onButtonClick: handleEnrollCourse
+        }
+    ];
 
     function handleViewOverallGrade() {
         navigate('grade-report');
@@ -55,16 +69,19 @@ export default function AssignedCourse() {
         navigate(`grade-report/:${courseCode}`);
     }
 
+    function handleEnrollCourse() {
+        navigate('course-enrollment');
+    }
+
     return (
         <ShadowCard>
             <div className="flex flex-col gap-[16px] p-[16px] w-full">
-                <ProfileCardHeader
-                    buttonLabel="View Overall Grade"
-                    buttonStyle="blue"
-                    cardLabel="Course Enrolled (Current Semester)"
-                    size="m"
-                    onButtonClick={handleViewOverallGrade}
-                />
+                <div className="flex gap-[8px]">
+                    <ProfileCardHeader
+                        cardLabel="Course Enrolled (Current Semester)"
+                        buttons={buttons}
+                    />
+                </div>
                 <div className="gap-[12px] grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] w-full">
                     {courses.map((course, courseKey) => (
                         <React.Fragment key={`${course.code}-${courseKey}`}>

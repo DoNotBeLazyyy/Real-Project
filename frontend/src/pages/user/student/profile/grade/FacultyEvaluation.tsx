@@ -1,157 +1,152 @@
 import CommonButton from '@components/buttons/CommonButton';
 import ShadowCard from '@components/card/ShadowCard';
+import CommonHeader from '@components/container/CommonHeader';
+import CommonTextArea from '@components/input/CommonTextArea';
 import NewGridTable from '@components/NewGridTable';
-import { usePath } from '@utils/path.util';
 import { ColDef, ICellRendererParams } from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-quartz.css';
-import { useEffect, useState } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 // Define row type
-interface GradeRow {
-    code?: string;
-    name?: string;
-    grade?: string;
-    equiv?: string;
-    button?: React.ReactNode;
+interface FacultyEvaluationRow {
+    criteria?: string;
+    evaluationScore?: number; // 1-5 scale
     isTotal?: boolean;
 }
 
 export default function FacultyEvaluation() {
-    // Hooks
+    // Navigation hook
     const navigate = useNavigate();
-    const { renderOutlet, setBasePath } = usePath();
+    // Score options
+    const scoreOptions = [
+        { value: 1, label: '1 - Very Unsatisfactory' },
+        { value: 2, label: '2 - Unsatisfactory' },
+        { value: 3, label: '3 - Satisfactory' },
+        { value: 4, label: '4 - Good' },
+        { value: 5, label: '5 - Excellent' }
+    ];
     // Row data for grid
-    const [rowData] = useState<GradeRow[]>([
+    const [facultyEvaluationData] = useState<FacultyEvaluationRow[]>([
         {
-            code: 'ITC - 105',
-            name: 'Software Engineering',
-            grade: '74',
-            equiv: '2.25'
+            criteria: 'Speaks English clearly and fluently',
+            evaluationScore: 5
         },
         {
-            code: 'ITC - 106',
-            name: 'Operating Systems',
-            grade: '88',
-            equiv: '1.25'
+            criteria: 'Explains concepts clearly and concisely',
+            evaluationScore: 4
         },
         {
-            code: 'ITC - 107',
-            name: 'Web Development',
-            grade: '91',
-            equiv: '1.00'
+            criteria: 'Encourages student participation',
+            evaluationScore: 4
         },
         {
-            code: 'ITC - 108',
-            name: 'Mobile App Development',
-            grade: '82',
-            equiv: '1.75'
+            criteria: 'Provides practical examples and applications',
+            evaluationScore: 5
         },
         {
-            code: 'ITC - 109',
-            name: 'Cybersecurity Basics',
-            grade: '77',
-            equiv: '2.00'
+            criteria: 'Responsive to student questions and feedback',
+            evaluationScore: 5
         },
         {
-            code: 'ITC - 110',
-            name: 'Artificial Intelligence',
-            grade: '89',
-            equiv: '1.25'
+            criteria: 'Organizes lectures and materials effectively',
+            evaluationScore: 4
         }
     ]);
     // Total row pinned at the bottom
-    const totalRow: GradeRow[] = [
+    const totalRow: FacultyEvaluationRow[] = [
         {
-            code: '',
-            equiv: '1.50',
-            grade: '85',
-            isTotal: true,
-            name: 'Total Grade'
+            criteria: 'Language Overall Evaluation',
+            evaluationScore: 4.5, // e.g., average of all scores
+            isTotal: true
         }
     ];
     // Column definitions for the grid
-    const columnDefs: ColDef<GradeRow>[] = [
+    const columnDefs: ColDef<FacultyEvaluationRow>[] = [
         {
-            field: 'code',
-            headerName: 'Course Code',
-            width: 140,
-            headerClass: 'ag-grade-header',
-            cellClass: 'font-[600] text-[#080612] text-[13px]'
-        },
-        {
-            field: 'name',
-            headerName: 'Course Name',
+            field: 'criteria',
+            headerName: 'Evaluation Criteria',
             flex: 1,
-            headerClass: 'ag-grade-header',
-            cellClass: 'text-[#080612] text-[13px]'
+            headerClass: 'ag-grade-header flex items-center justify-center text-center',
+            cellClass: (params) => params.node.rowPinned === 'bottom' ? 'font-[700] text-[#0C60A1]' : 'text-[#080612] text-[14px] flex items-center justify-center'
         },
         {
-            field: 'grade',
-            headerName: 'Grade',
-            width: 120,
-            headerClass: 'ag-grade-header items-center flex justi-center',
-            cellClass: 'font-[600] text-[#080612] text-[13px]'
-        },
-        {
-            field: 'equiv',
-            headerName: 'Equivalent',
-            width: 120,
+            field: 'evaluationScore',
+            headerName: 'Rating',
+            width: 200,
             headerClass: 'ag-grade-header',
-            cellClass: 'text-center font-[600] text-[#080612] text-[13px]'
-        },
-        {
-            field: 'button',
-            headerName: 'Action',
-            width: 140,
-            sortable: false,
-            headerClass: 'ag-grade-header',
-            cellClass: 'flex justify-center',
-            cellRenderer: (params: ICellRendererParams<GradeRow>) => {
-                const courseCode = params.data?.code;
-
-                if (!courseCode) {
-                    return;
-                }
+            cellClass: (params) => params.node.rowPinned === 'bottom' ? 'font-[700] text-[#0C60A1]' : 'flex items-start justify-end',
+            cellRenderer: (params: ICellRendererParams<FacultyEvaluationRow>) => {
+                if (params.data?.isTotal) return params.data.evaluationScore; // show total
 
                 return (
-                    <CommonButton
-                        buttonLabel="View Grade"
-                        buttonStyle="blue"
-                        size="sm"
-                        onButtonClick={() => handleViewGrade(courseCode)}
-                    />
+                    <select
+                        className="border-[#0C60A1] border-[1px] font-[500] px-[8px] py-[4px] rounded-[4px] text-[#080612] w-full"
+                        value={params.data?.evaluationScore || ''}
+                        onChange={() => {}}
+                    >
+                        {scoreOptions.map((score, optionKey) => (
+                            <option
+                                key={`${score}-${optionKey}`}
+                                value={score.value}
+                            >
+                                {score.label}
+                            </option>
+                        ))}
+                    </select>
                 );
             }
         }
     ];
 
-    useEffect(() => {
-        setBasePath('/student/profile/grade-report');
-    }, []);
-
-    function handleViewGrade(courseCode: string) {
-        navigate(`${courseCode}`);
+    function handleSubmitEvaluation() {
+        alert('Evaluation Submitted');
+        navigate('/student/profile/grade-report/test-link');
     }
 
     return (
         <div className="flex flex-col gap-[16px] w-full">
-            <div className="flex items-baseline justify-between leading-[100%]">
-                <div className="flex flex-col gap-[8px] leading-[100%]">
-                    <h1 className="font-[800] text-[#0C60A1] text-[20px]">
-                        Julius Robert T. Tolentino
-                    </h1>
-                    <h2 className="font-[500] text-[#080612] text-[14px]">Faculty Evaluation</h2>
-                </div>
-            </div>
+            <CommonHeader
+                title="Julius Robert T. Tolentino | ITC - 129 (TTH / 3:00PM - 5:00PM)"
+                subTitle="Faculty Evaluation"
+            />
             <ShadowCard white>
-                <NewGridTable<GradeRow>
-                    rowData={rowData}
-                    columnDefs={columnDefs}
-                    pinnedBottomRowData={totalRow}
-                />
+                <div className="flex flex-col gap-[16px] p-[16px] w-full">
+                    <h3 className="font-[600] leading-[100%] text-[#0C60A1] text-[20px]">Language</h3>
+                    <ShadowCard white>
+                        <NewGridTable<FacultyEvaluationRow>
+                            rowData={facultyEvaluationData}
+                            columnDefs={columnDefs}
+                            pinnedBottomRowData={totalRow}
+                        />
+                    </ShadowCard>
+                </div>
             </ShadowCard>
+            <ShadowCard white>
+                <div className="flex flex-col gap-[16px] p-[16px] w-full">
+                    <h3 className="font-[600] leading-[100%] text-[#0C60A1] text-[20px]">Technical</h3>
+                    <ShadowCard white>
+                        <NewGridTable<FacultyEvaluationRow>
+                            rowData={facultyEvaluationData}
+                            columnDefs={columnDefs}
+                            pinnedBottomRowData={totalRow}
+                        />
+                    </ShadowCard>
+                </div>
+            </ShadowCard>
+            <div className="flex h-[200px]">
+                <CommonTextArea
+                    placeholder="Provide more feedback about the professor or the course..."
+                />
+            </div>
+            <div className="flex justify-end w-full">
+                <CommonButton
+                    buttonLabel="Submit Evaluation"
+                    buttonStyle="blue"
+                    onButtonClick={handleSubmitEvaluation}
+                />
+            </div>
         </div>
     );
 }

@@ -44,7 +44,6 @@ export default function CourseTask() {
         <MainDiv>
             <CommonHeader
                 icons={iconMap}
-                isBlueHeader
                 subTitle="ITC-129 LEC (MWF / 8:00AM - 10:00AM)"
                 title="Computer Organization"
             />

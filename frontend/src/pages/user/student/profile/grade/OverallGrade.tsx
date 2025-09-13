@@ -1,5 +1,6 @@
 import CommonButton from '@components/buttons/CommonButton';
 import ShadowCard from '@components/card/ShadowCard';
+import CommonHeader from '@components/container/CommonHeader';
 import NewGridTable from '@components/NewGridTable';
 import { usePath } from '@utils/path.util';
 import { ColDef, ICellRendererParams } from 'ag-grid-community';
@@ -9,7 +10,7 @@ import { useEffect, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 
 // Define row type
-interface GradeRow {
+interface GradeRowProps {
     code?: string;
     name?: string;
     grade?: string;
@@ -23,12 +24,12 @@ export default function OverallGrade() {
     const navigate = useNavigate();
     const { renderOutlet, setBasePath } = usePath();
     // Row data for grid
-    const [rowData] = useState<GradeRow[]>([
+    const [rowData] = useState<GradeRowProps[]>([
         {
             code: 'ITC - 105',
             name: 'Software Engineering',
             grade: '74',
-            equiv: '2.25'
+            equiv: '0'
         },
         {
             code: 'ITC - 106',
@@ -40,19 +41,19 @@ export default function OverallGrade() {
             code: 'ITC - 107',
             name: 'Web Development',
             grade: '91',
-            equiv: '1.00'
+            equiv: '0'
         },
         {
             code: 'ITC - 108',
             name: 'Mobile App Development',
             grade: '82',
-            equiv: '1.75'
+            equiv: '1.0'
         },
         {
             code: 'ITC - 109',
             name: 'Cybersecurity Basics',
             grade: '77',
-            equiv: '2.00'
+            equiv: '0'
         },
         {
             code: 'ITC - 110',
@@ -62,17 +63,17 @@ export default function OverallGrade() {
         }
     ]);
     // Total row pinned at the bottom
-    const totalRow: GradeRow[] = [
+    const totalRow: GradeRowProps[] = [
         {
             code: '',
-            equiv: '1.50',
-            grade: '85',
+            equiv: '0',
+            grade: '0',
             isTotal: true,
             name: 'Total Grade'
         }
     ];
     // Column definitions for the grid
-    const columnDefs: ColDef<GradeRow>[] = [
+    const columnDefs: ColDef<GradeRowProps>[] = [
         {
             field: 'code',
             headerName: 'Course Code',
@@ -90,46 +91,32 @@ export default function OverallGrade() {
         {
             field: 'grade',
             headerName: 'Grade',
-            width: 120,
-            headerClass: 'ag-grade-header items-center flex justi-center',
-            cellClass: 'font-[600] text-[#080612] text-[13px]'
+            width: 180,
+            headerClass: 'ag-grade-header flex items-center justify-center text-center w-full', // centers header
+            cellClass: 'font-[600] text-[#080612] text-[13px] flex items-center justify-center', // centers cell content
+            cellRenderer: (params: ICellRendererParams<GradeRowProps>) => {
+                const courseCode = params.data?.code;
+
+                if (params.node.childIndex % 2 === 0 && courseCode) {
+                    return (
+                        <CommonButton
+                            buttonLabel="Evaluate Faculty"
+                            buttonStyle="blue"
+                            size="m"
+                            onButtonClick={() => handleEvaluateFaculty(courseCode)}
+                        />
+                    );
+                } else {
+                    return params.node.data?.grade;
+                }
+            }
         },
         {
             field: 'equiv',
             headerName: 'Equivalent',
             width: 120,
             headerClass: 'ag-grade-header',
-            cellClass: 'text-center font-[600] text-[#080612] text-[13px]'
-        },
-        {
-            field: 'button',
-            headerName: 'Action',
-            width: 140,
-            sortable: false,
-            headerClass: 'ag-grade-header',
-            cellClass: 'flex justify-center',
-            cellRenderer: (params: ICellRendererParams<GradeRow>) => {
-                const courseCode = params.data?.code;
-
-                if (!courseCode) {
-                    return;
-                };
-
-                return (
-                    <CommonButton
-                        buttonLabel="View Grade"
-                        buttonStyle="blue"
-                        size="m"
-                        onButtonClick={() => {
-                            if (params.node.childIndex % 2 === 0) {
-                                handleViewGrade(courseCode);
-                            } else {
-                                handleEvaluateFaculty(courseCode);
-                            }
-                        }}
-                    />
-                );
-            }
+            cellClass: ' font-[600] text-[#080612] text-[13px]'
         }
     ];
 
@@ -137,9 +124,9 @@ export default function OverallGrade() {
         setBasePath('/student/profile/grade-report');
     });
 
-    function handleViewGrade(courseCode: string) {
-        navigate(`${courseCode}`);
-    }
+    // function handleViewGrade(courseCode: string) {
+    //     navigate(`${courseCode}`);
+    // }
 
     function handleEvaluateFaculty(courseCode: string) {
         navigate(`evaluate-faculty/:${courseCode}`);
@@ -150,16 +137,13 @@ export default function OverallGrade() {
         : (
             <div className="flex flex-col gap-[16px] w-full">
                 <div className="flex items-baseline justify-between leading-[100%]">
-                    <div className="flex flex-col gap-[8px] leading-[100%]">
-                        <h1 className="font-[800] text-[#0C60A1] text-[20px]">
-                            A.Y. 2024 - 2025
-                        </h1>
-                        <h2 className="font-[500] text-[#080612] text-[14px]">1st Semester - Grade Report</h2>
-                    </div>
-
+                    <CommonHeader
+                        title="A.Y. 2024 - 2025"
+                        subTitle="1st Semester - Grade Report"
+                    />
                 </div>
                 <ShadowCard white>
-                    <NewGridTable<GradeRow>
+                    <NewGridTable<GradeRowProps>
                         rowData={rowData}
                         columnDefs={columnDefs}
                         pinnedBottomRowData={totalRow}

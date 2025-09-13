@@ -5,6 +5,10 @@ export interface CommonButtonProps {
     buttonLabel?: string;
     // Button style
     buttonStyle?: 'white' | 'blue';
+    // Checks whether button is disabled or not
+    disabled?: boolean;
+    // Checks whether button is rounded or not
+    isRoundedFull?: boolean;
     // Checks whether button is shadowed or not
     isShadowed?: boolean;
     // Button size
@@ -16,6 +20,8 @@ export interface CommonButtonProps {
 export default function CommonButton({
     buttonLabel,
     buttonStyle,
+    disabled,
+    isRoundedFull = true,
     isShadowed,
     size = 'default',
     onButtonClick
@@ -40,15 +46,20 @@ export default function CommonButton({
         <button
             className={
                 classMerge(
-                    'font-[400] leading-[100%] rounded-full',
+                    'font-[400] leading-[100%]',
+                    isRoundedFull
+                        ? 'rounded-full'
+                        : 'rounded-[4px]',
                     buttonStyle === 'white'
                         ? 'bg-[#FFFFFF] text-[#052554]'
                         : 'bg-[#0C60A1] text-[#FFFFFF]',
                     isShadowed
                         ? 'shadow-[0_4px_4px_rgba(0,0,0,0.35)'
-                        : ''
+                        : '',
+                    disabled && 'bg-[#868686] text-[#dfdfe7]'
                 )
             }
+            disabled={disabled}
             style={buttonSize}
             onClick={onButtonClick && onButtonClick}
         >

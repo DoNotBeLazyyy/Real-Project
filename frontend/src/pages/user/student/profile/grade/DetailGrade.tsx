@@ -1,15 +1,17 @@
-interface GradeRow {
+import CommonHeader from '@components/container/CommonHeader';
+
+interface GradeRowProps {
     name: string;
     activities?: number[];
     examinations?: number[];
     projects?: number[];
-    children?: GradeRow[];
+    children?: GradeRowProps[];
     total?: number;
 }
 
 export default function DetailGrade() {
     // Example row data with categories
-    const rowData: GradeRow[] = [
+    const rowData: GradeRowProps[] = [
         {
             name: 'Prelim Grades',
             activities: [95, 90, 87, 92],
@@ -59,7 +61,7 @@ export default function DetailGrade() {
     ];
 
     // Helper to calculate weighted total
-    function calculateTotal(row: GradeRow) {
+    function calculateTotal(row: GradeRowProps) {
         const sum = (arr?: number[]) =>
             arr && arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
 
@@ -94,10 +96,10 @@ export default function DetailGrade() {
 
     return (
         <div className="flex flex-col gap-[20px]">
-            <div className="flex flex-col gap-[8px] leading-[100%]">
-                <h1 className="font-[800] text-[#0C60A1] text-[20px]">ITC-129LEC (TTH / 5:00PM - 6:00PM)</h1>
-                <h2 className="font-[500] text-[#080612] text-[14px]">Grade Report</h2>
-            </div>
+            <CommonHeader
+                title="ITC - 129 (TTH / 3:00PM - 5:00PM)"
+                subTitle="Grade Report"
+            />
             <div className="flex flex-col gap-[16px]">
                 {rowData.map((row, idx) => (
                     <div

@@ -54,3 +54,22 @@ ul, li {
   background-color: #0C60A1 !important;
   color: #ffffff !important;
 }
+
+.ag-theme-quartz .ag-icon {
+  color: #fff !important;
+}
+
+.ag-theme-quartz .ag-cell {
+  border: 1px solid #d4d4d4; /* adjust color to match your design */
+  box-sizing: border-box;     /* ensures border fits inside cell */
+}
+
+/* Optional: remove double borders by collapsing */
+.ag-theme-quartz .ag-row {
+  border-bottom: none; /* already handled by .ag-cell */
+}
+
+/* Keep headers clean (no extra borders) */
+.ag-theme-quartz .ag-header-cell {
+  border: none;
+}

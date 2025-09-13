@@ -1,7 +1,6 @@
 import gridMenuIcon from '@assets/icons/grid-menu-icon.svg';
 import listMenuIcon from '@assets/icons/list-menu-icon.svg';
 import notifBellIcon from '@assets/icons/notification-bell-icon.svg';
-import settingsIcon from '@assets/icons/settings-icon.svg';
 import ShadowCard from '@components/card/ShadowCard';
 import CommonHeader from '@components/container/CommonHeader';
 import MainDiv from '@components/container/MainDiv';
@@ -20,9 +19,6 @@ export default function StudentCourse() {
         {
             imageUrl: notifBellIcon,
             pendingActCount: '5'
-        },
-        {
-            imageUrl: settingsIcon
         },
         {
             height: 13,
