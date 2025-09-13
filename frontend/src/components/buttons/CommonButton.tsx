@@ -53,9 +53,7 @@ export default function CommonButton({
                     buttonStyle === 'white'
                         ? 'bg-[#FFFFFF] text-[#052554]'
                         : 'bg-[#0C60A1] text-[#FFFFFF]',
-                    isShadowed
-                        ? 'shadow-[0_4px_4px_rgba(0,0,0,0.35)'
-                        : '',
+                    isShadowed && 'shadow-[0_4px_4px_rgba(0,0,0,0.35)]',
                     disabled && 'bg-[#868686] text-[#dfdfe7]'
                 )
             }
