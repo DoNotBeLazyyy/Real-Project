@@ -60,16 +60,24 @@ ul, li {
 }
 
 .ag-theme-quartz .ag-cell {
-  border: 1px solid #d4d4d4; /* adjust color to match your design */
-  box-sizing: border-box;     /* ensures border fits inside cell */
+  border: 1px solid #d4d4d4;
 }
 
-/* Optional: remove double borders by collapsing */
-.ag-theme-quartz .ag-row {
-  border-bottom: none; /* already handled by .ag-cell */
-}
+.ag-theme-quartz {
+    & .ag-cell {
+        border: 1px solid #d4d4d4;
+        border-bottom: none;
+    }
 
-/* Keep headers clean (no extra borders) */
-.ag-theme-quartz .ag-header-cell {
-  border: none;
+    & .ag-header-cell-label,
+    & .ag-header-cell-comp-wrapper,
+    & .ag-cell {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    & .ag-horizontal-left-spacer {
+      overflow-x: hidden;
+    }
 }

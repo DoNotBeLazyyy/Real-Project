@@ -27,14 +27,16 @@ export default function Input({
     }, [type]);
 
     return (
-        <div className="flex gap-[4px] items-center">
-            <span className="flex-1 leading-[100%] text-[#080612] text-[14px]">
-                {label}
-            </span>
+        <div className="flex gap-[4px] h-full items-center w-full">
+            {label && (
+                <span className="leading-[100%] text-[#080612] text-[14px] w-max">
+                    {label}
+                </span>
+            )}
             <input
                 className={
                     classMerge(
-                        'border-[0.5px] border-black outline-none rounded-[4px] shadow-[0_4px_4px_rgba(0,0,0,0.25)] text-[#000000] flex-1',
+                        'border-[0.5px] border-black outline-none rounded-[4px] shadow-[0_4px_4px_rgba(0,0,0,0.25)] text-[#000000] leading-[100%]',
                         size === 's'
                             ? 'p-[2px] text-[14px] shadow-none'
                             : 'p-[12px] text-[16px]'

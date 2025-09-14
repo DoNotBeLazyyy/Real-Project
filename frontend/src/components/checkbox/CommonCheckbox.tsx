@@ -2,17 +2,17 @@ import { classMerge } from '@utils/css.util';
 import { useState } from 'react';
 
 interface CommonCheckboxProps {
-  checked?: boolean;
-  onChange?: (checked: boolean) => void;
-  label?: string;
-  disabled?: boolean;
+    checked?: boolean;
+    disabled?: boolean;
+    label?: string;
+    onChange?: (checked: boolean) => void;
 }
 
 export default function CommonCheckbox({
     checked = false,
-    onChange,
+    disabled = false,
     label,
-    disabled = false
+    onChange
 }: CommonCheckboxProps) {
     const [internalChecked, setInternalChecked] = useState(checked);
 

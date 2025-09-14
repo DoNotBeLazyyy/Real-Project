@@ -68,7 +68,7 @@ export default function FacultyEvaluation() {
             field: 'criteria',
             headerName: 'Evaluation Criteria',
             flex: 1,
-            headerClass: 'ag-grade-header flex items-center justify-center text-center',
+            headerClass: 'ag-grade-header flex justify-end items-end',
             cellClass: (params) => params.node.rowPinned === 'bottom' ? 'font-[700] text-[#0C60A1]' : 'text-[#080612] text-[14px] flex items-center justify-center'
         },
         {

@@ -10,7 +10,7 @@ interface TabProps {
     path: string;
 }
 
-interface SidebarMenuProps {
+export interface SidebarMenuProps {
     // User level to determine appropriate tab options per user role
     userLevel?: 'student' | 'faculty' | 'admin';
 }
@@ -48,10 +48,10 @@ export default function SidebarMenu({
             { label: 'Settings', path: 'settings' }
         ],
         admin: [
-            { label: 'Admin', path: 'admin' },
+            { label: 'Dashboard', path: 'dashboard' },
             { label: 'Course', path: 'course' },
-            { label: 'Chats', path: 'chats' },
-            { label: 'Settings', path: 'settings' }
+            { label: 'Support', path: 'chats' },
+            { label: 'Account', path: 'account' }
         ]
     };
 
@@ -70,7 +70,7 @@ export default function SidebarMenu({
         if (tab) {
             const tabPath = tab.path;
             setActiveTab(tabPath);
-            navigate(`/student/${tabPath}`);
+            navigate(`/${userLevel}/${tabPath}`);
         }
     }
 

@@ -342,6 +342,11 @@ export default function CourseEnrollment() {
                     paginationPageSize={10}
                     paginationPageSizeSelector={[10, 20, 50]}
                     rowData={rowData}
+                    selection={{
+                        mode: 'multiRow',
+                        headerCheckbox: true,
+                        selectAll: 'filtered'
+                    }}
                 />
             </ShadowCard>
             <div className="flex-none ml-auto">

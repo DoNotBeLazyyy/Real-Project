@@ -1,13 +1,12 @@
 import lockIcon from '@assets/icons/lock-icon.svg';
 import logoutIcon from '@assets/icons/logout-icon.svg';
 import supportIcon from '@assets/icons/support-icon.svg';
-import SidebarMenu from '@components/buttons/SidebarMenu';
+import SidebarMenu, { SidebarMenuProps } from '@components/buttons/SidebarMenu';
 import BrandCard from '@components/card/BrandCard';
 import SearchContact from '@components/input/SearchContact';
 import CommonMediaWithContent from '@components/label/CommonMediaWithContent';
 
-export default function MainSidebar() {
-    // Custom variables
+export default function MainSidebar(props: SidebarMenuProps) {    // Custom variables
     const iconButtonsMap = [
         { icon: lockIcon, label: 'Data privacy' },
         { icon: supportIcon, label: 'Technical Support' },
@@ -19,7 +18,7 @@ export default function MainSidebar() {
             <div className="flex-1">
                 <BrandCard isSmall />
             </div>
-            <SidebarMenu userLevel="student" />
+            <SidebarMenu {...props} />
             <div className="flex flex-col gap-[4px] h-[calc(100vh-430px)]">
                 <SearchContact />
             </div>
