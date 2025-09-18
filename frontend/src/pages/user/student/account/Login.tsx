@@ -13,7 +13,7 @@ export default function StudentLogin() {
                 <div className="pb-[20px] w-full">
                     <div className="flex flex-col gap-[8px]">
                         {inputMap.map((item, key) => (
-                            <Input 
+                            <Input
                                 key={key}
                                 type={item.type}
                                 placeholder={item.placeholder}
@@ -21,7 +21,7 @@ export default function StudentLogin() {
                         ))}
                     </div>
                     <label className="cursor-pointer flex gap-[8px] items-center mt-[16px]">
-                        <input 
+                        <input
                             className="appearance-none bg-white checked:after:content-['✓'] flex h-[20px] items-center justify-center outline-none rounded text-black w-[20px]"
                             type="checkbox"
                         />

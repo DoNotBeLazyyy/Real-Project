@@ -21,7 +21,7 @@ export default function PersonalDetail() {
                 ? key.length
                 : max;
         }, 0);
-    const labelWidth = `${maxLength + 2}ch`;
+    const labelWidth = `${maxLength * 8 + 24}px`;
 
     return (
         <ShadowCard>

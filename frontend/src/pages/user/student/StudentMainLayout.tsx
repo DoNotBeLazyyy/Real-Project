@@ -25,7 +25,7 @@ export default function StudentMainLayout() {
     }, [isAuthenticated, pathname]);
 
     if (!isAuthenticated && isAccountPath) {
-        return ;
+        return <Outlet />;
     }
 
     if (isAuthenticated) {
@@ -44,6 +44,4 @@ export default function StudentMainLayout() {
             </div>
         );
     }
-
-    return <Outlet />;
 }

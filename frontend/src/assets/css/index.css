@@ -80,4 +80,8 @@ ul, li {
     & .ag-horizontal-left-spacer {
       overflow-x: hidden;
     }
+    
+    & .ag-sort-order {
+      display: none;
+    }
 }

@@ -1,6 +1,6 @@
 import { classMerge } from '@utils/css.util';
 
-export interface CommonButtonProps {
+export interface CommonButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     // Button label
     buttonLabel?: string;
     // Button style
@@ -20,6 +20,7 @@ export interface CommonButtonProps {
 export default function CommonButton({
     buttonLabel,
     buttonStyle,
+    className,
     disabled,
     isRoundedFull = true,
     isShadowed,
@@ -54,7 +55,8 @@ export default function CommonButton({
                         ? 'bg-[#FFFFFF] text-[#052554]'
                         : 'bg-[#0C60A1] text-[#FFFFFF]',
                     isShadowed && 'shadow-[0_4px_4px_rgba(0,0,0,0.35)]',
-                    disabled && 'bg-[#868686] text-[#dfdfe7]'
+                    disabled && 'bg-[#868686] text-[#dfdfe7]',
+                    className
                 )
             }
             disabled={disabled}

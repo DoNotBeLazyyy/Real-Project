@@ -1,3 +1,4 @@
+import CommonButton from '@components/buttons/CommonButton';
 import ShadowCard from '@components/card/ShadowCard';
 import CommonGroupRadioCheckbox from '@components/checkbox/CommonRadioCheckboxGroup';
 import CommonHeader from '@components/container/CommonHeader';
@@ -38,6 +39,7 @@ export default function AdminAccount() {
     const [studentRowData, setStudentRowData] = useState<StudentFacultyRowProps[]>([]);
     const [facultyRowData, setFacultyRowData] = useState<StudentFacultyRowProps[]>([]);
     const [selectedRole, setSelectedRole] = useState<RoleProps>('Student');
+    const [isModify, setIsModify] = useState(false);
     const [columnDefs, setColumnDefs] = useState<ColDef<StudentFacultyRowProps>[]>([]);
     // Dummy Student data
     const dummyStudentData: StudentFacultyRowProps[] = [
@@ -57,12 +59,124 @@ export default function AdminAccount() {
         { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
         { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
         { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
+        { facultyId: 'F001', firstName: 'Dr. Smith', lastName: 'Anderson', sex: 'Male', email: 'smith.anderson@example.com', age: 45, address: '12 University Blvd', department: 'Computer Science' },
+        { facultyId: 'F002', firstName: 'Dr. Emily', lastName: 'Clark', sex: 'Female', email: 'emily.clark@example.com', age: 38, address: '34 College Ave', department: 'Information Technology' },
+        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
+        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
+        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
+        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
+        { facultyId: 'F001', firstName: 'Dr. Smith', lastName: 'Anderson', sex: 'Male', email: 'smith.anderson@example.com', age: 45, address: '12 University Blvd', department: 'Computer Science' },
+        { facultyId: 'F002', firstName: 'Dr. Emily', lastName: 'Clark', sex: 'Female', email: 'emily.clark@example.com', age: 38, address: '34 College Ave', department: 'Information Technology' },
+        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
+        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
+        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
+        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
+        { facultyId: 'F001', firstName: 'Dr. Smith', lastName: 'Anderson', sex: 'Male', email: 'smith.anderson@example.com', age: 45, address: '12 University Blvd', department: 'Computer Science' },
+        { facultyId: 'F002', firstName: 'Dr. Emily', lastName: 'Clark', sex: 'Female', email: 'emily.clark@example.com', age: 38, address: '34 College Ave', department: 'Information Technology' },
+        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
+        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
+        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
+        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
+        { facultyId: 'F001', firstName: 'Dr. Smith', lastName: 'Anderson', sex: 'Male', email: 'smith.anderson@example.com', age: 45, address: '12 University Blvd', department: 'Computer Science' },
+        { facultyId: 'F002', firstName: 'Dr. Emily', lastName: 'Clark', sex: 'Female', email: 'emily.clark@example.com', age: 38, address: '34 College Ave', department: 'Information Technology' },
+        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
+        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
+        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
+        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
+        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
+        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
+        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
+        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
+        { facultyId: 'F001', firstName: 'Dr. Smith', lastName: 'Anderson', sex: 'Male', email: 'smith.anderson@example.com', age: 45, address: '12 University Blvd', department: 'Computer Science' },
+        { facultyId: 'F002', firstName: 'Dr. Emily', lastName: 'Clark', sex: 'Female', email: 'emily.clark@example.com', age: 38, address: '34 College Ave', department: 'Information Technology' },
+        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
+        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
+        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
+        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
+        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
+        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
+        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
+        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
+        { facultyId: 'F001', firstName: 'Dr. Smith', lastName: 'Anderson', sex: 'Male', email: 'smith.anderson@example.com', age: 45, address: '12 University Blvd', department: 'Computer Science' },
+        { facultyId: 'F002', firstName: 'Dr. Emily', lastName: 'Clark', sex: 'Female', email: 'emily.clark@example.com', age: 38, address: '34 College Ave', department: 'Information Technology' },
+        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
+        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
+        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
+        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
+        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
+        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
+        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
+        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
+        { facultyId: 'F001', firstName: 'Dr. Smith', lastName: 'Anderson', sex: 'Male', email: 'smith.anderson@example.com', age: 45, address: '12 University Blvd', department: 'Computer Science' },
+        { facultyId: 'F002', firstName: 'Dr. Emily', lastName: 'Clark', sex: 'Female', email: 'emily.clark@example.com', age: 38, address: '34 College Ave', department: 'Information Technology' },
+        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
+        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
+        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
+        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
+        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
+        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
+        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
+        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
+        { facultyId: 'F001', firstName: 'Dr. Smith', lastName: 'Anderson', sex: 'Male', email: 'smith.anderson@example.com', age: 45, address: '12 University Blvd', department: 'Computer Science' },
+        { facultyId: 'F002', firstName: 'Dr. Emily', lastName: 'Clark', sex: 'Female', email: 'emily.clark@example.com', age: 38, address: '34 College Ave', department: 'Information Technology' },
+        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
+        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
+        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
+        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
+        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
+        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
+        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
+        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
+        { facultyId: 'F001', firstName: 'Dr. Smith', lastName: 'Anderson', sex: 'Male', email: 'smith.anderson@example.com', age: 45, address: '12 University Blvd', department: 'Computer Science' },
+        { facultyId: 'F002', firstName: 'Dr. Emily', lastName: 'Clark', sex: 'Female', email: 'emily.clark@example.com', age: 38, address: '34 College Ave', department: 'Information Technology' },
+        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
+        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
+        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
+        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
+        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
+        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
+        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
+        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
+        { facultyId: 'F001', firstName: 'Dr. Smith', lastName: 'Anderson', sex: 'Male', email: 'smith.anderson@example.com', age: 45, address: '12 University Blvd', department: 'Computer Science' },
+        { facultyId: 'F002', firstName: 'Dr. Emily', lastName: 'Clark', sex: 'Female', email: 'emily.clark@example.com', age: 38, address: '34 College Ave', department: 'Information Technology' },
+        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
+        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
+        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
+        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
+        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
+        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
+        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
+        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
+        { facultyId: 'F001', firstName: 'Dr. Smith', lastName: 'Anderson', sex: 'Male', email: 'smith.anderson@example.com', age: 45, address: '12 University Blvd', department: 'Computer Science' },
+        { facultyId: 'F002', firstName: 'Dr. Emily', lastName: 'Clark', sex: 'Female', email: 'emily.clark@example.com', age: 38, address: '34 College Ave', department: 'Information Technology' },
+        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
+        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
+        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
+        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
         { facultyId: 'F007', firstName: 'Dr. William', lastName: 'Wilson', sex: 'Male', email: 'william.wilson@example.com', age: 48, address: '45 Campus Blvd', department: 'Computer Science' }
     ];
-
+    // User level options
     const roleOptions: RoleProps[] = [
         'Student',
         'Faculty'
+    ];
+    // Button list
+    const buttonOptions = [
+        {
+            label: 'Modify',
+            condition: !isModify,
+            onButtonClick: handleEnableModification
+        },
+        {
+            label: 'Save Changes',
+            condition: isModify,
+            onButtonClick: handleSubmitModification
+        },
+        {
+            label: 'Discard Changes',
+            condition: isModify,
+            onButtonClick: handleDisableModification
+        }
     ];
 
     useEffect(() => {
@@ -228,27 +342,16 @@ export default function AdminAccount() {
         ];
     }
 
-    function createEmptyRow(data: StudentFacultyRowProps[]) {
-        const emptyRow: StudentFacultyRowProps = {};
-        const nextIndex = data.length + 1; // 1-based index
-        const paddedIndex = String(nextIndex)
-            .padStart(3, '0');
+    function handleEnableModification() {
+        setIsModify(true);
+    }
 
-        // Copy keys from first row if exists
-        if (data.length > 0) {
-            Object.keys(data[0])
-                .forEach((key) => {
-                    emptyRow[key as keyof StudentFacultyRowProps] = '' as unknown;
-                });
-        }
+    function handleDisableModification() {
+        setIsModify(false);
+    }
 
-        if (selectedRole === 'Student') {
-            emptyRow.studentId = `S${paddedIndex}`;
-        } else {
-            emptyRow.facultyId = `F${paddedIndex}`;
-        }
-
-        return emptyRow;
+    function handleSubmitModification() {
+        alert('Modification saved successfully');
     }
 
     return renderOutlet
@@ -256,18 +359,36 @@ export default function AdminAccount() {
         : (
             <div className="flex flex-col gap-[20px]">
                 <CommonHeader title="Account Management" />
-                <CommonGroupRadioCheckbox
-                    options={roleOptions}
-                    value={selectedRole}
-                    onChange={setSelectedRole}
-                />
+                <ShadowCard>
+                    <div className="flex justify-between p-[20px] w-full">
+                        <div className="flex gap-[12px]">
+                            {buttonOptions.map((btn, btnKey) => (
+                                <CommonButton
+                                    buttonLabel={btn.label}
+                                    buttonStyle="blue"
+                                    className={
+                                        btn.condition ? 'block' : 'hidden'
+                                    }
+                                    isRoundedFull={false}
+                                    key={`${btn.label}-${btnKey}`}
+                                    size="m"
+                                    onButtonClick={btn.onButtonClick}
+                                />
+                            ))}
+                        </div>
+                        <CommonGroupRadioCheckbox
+                            options={roleOptions}
+                            value={selectedRole}
+                            onChange={setSelectedRole}
+                        />
+                    </div>
+                </ShadowCard>
                 <ShadowCard>
                     <div className="flex flex-col gap-[12px] justify-end p-[20px] w-full">
                         <NewGridTable<StudentFacultyRowProps>
                             columnDefs={columnDefs}
                             domLayout="normal"
                             height={400}
-                            hasAddRemoveColumn
                             isPaginated={true}
                             pagination={true}
                             paginationPageSize={10}
@@ -276,12 +397,6 @@ export default function AdminAccount() {
                                 selectedRole === 'Student'
                                     ? studentRowData
                                     : facultyRowData
-                            }
-                            onCreateEmptyRow={createEmptyRow}
-                            onRowDataChange={
-                                selectedRole === 'Student'
-                                    ? setStudentRowData
-                                    : setFacultyRowData
                             }
                         />
                     </div>
