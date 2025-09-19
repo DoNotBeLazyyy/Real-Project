@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import CommonRadioCheckbox from './CommonRadioCheckbox';
 
-interface CommonGroupRadioCheckboxProps<T extends string> {
+export interface CommonGroupRadioCheckboxProps<T extends string> {
     disabled?: boolean;
     options?: T[];
     value?: T;

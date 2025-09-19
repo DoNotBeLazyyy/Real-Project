@@ -1,8 +1,8 @@
 import CommonButton from '@components/buttons/CommonButton';
 import ShadowCard from '@components/card/ShadowCard';
 import CommonHeader from '@components/container/CommonHeader';
+import NewGridTable from '@components/GridTable/NewGridTable';
 import CommonTextArea from '@components/input/CommonTextArea';
-import NewGridTable from '@components/NewGridTable';
 import { ColDef, ICellRendererParams } from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-quartz.css';

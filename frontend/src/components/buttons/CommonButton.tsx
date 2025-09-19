@@ -45,6 +45,7 @@ export default function CommonButton({
 
     return (
         <button
+            type="button"
             className={
                 classMerge(
                     'font-[400] leading-[100%]',

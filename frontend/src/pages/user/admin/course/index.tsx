@@ -1,9 +1,9 @@
 import CommonButton from '@components/buttons/CommonButton';
 import ShadowCard from '@components/card/ShadowCard';
 import CommonHeader from '@components/container/CommonHeader';
+import NewGridTable from '@components/GridTable/NewGridTable';
 import Input from '@components/input/Input';
-import CommonTableInput from '@components/input/TableInput';
-import NewGridTable from '@components/NewGridTable';
+import ValidCommonInput from '@components/input/ValidCommonInput';
 import { usePath } from '@utils/path.util';
 import { ColDef, ICellRendererParams } from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
@@ -124,7 +124,7 @@ export default function AdminCourse() {
         const value = data[field] ?? '';
 
         return (
-            <CommonTableInput
+            <ValidCommonInput
                 value={value as string}
                 className="w-full"
                 onChange={(e) => {

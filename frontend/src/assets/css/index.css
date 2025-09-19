@@ -6,9 +6,10 @@ body {
   font-family: 'Inter', sans-serif;
 }
 
-/* Webkit (Chrome, Edge, Safari) */
 ::-webkit-scrollbar {
   width: 6px;
+  height: 6px; /* ✅ also define for horizontal */
+  scrollbar-gutter: stable both-edges;
 }
 ::-webkit-scrollbar-thumb {
   background-color: rgba(0, 0, 0, 0.3);
@@ -64,24 +65,57 @@ ul, li {
 }
 
 .ag-theme-quartz {
-    & .ag-cell {
-        border: 1px solid #d4d4d4;
-        border-bottom: none;
+    & .ag-cell:focus,
+    & .ag-floating-filter-full-body:focus-within {
+      background-color: #bbdfff;
     }
 
     & .ag-header-cell-label,
     & .ag-header-cell-comp-wrapper,
     & .ag-cell {
+        align-items: center;
         display: flex;
         justify-content: center;
-        align-items: center;
+    }
+
+    & .ag-header-cell {
+      padding: 0 !important;
+    }
+
+    & .ag-header-cell-filter {
+      padding-left: 10px;
+      padding-right: 10px;
+    }
+
+    & .ag-wrapper.ag-input-wrapper.ag-text-field-input-wrapper {
+      padding-left: 10px !important;
+      padding-right: 10px !important;
+    }
+
+    & .ag-floating-filter-full-body {
+      border-left: solid 1px #d4d4d4;
+    }
+
+    & .ag-input-field-input.ag-text-field-input {
+      padding-left: 10px !important;
+      padding-right: 10px !important;
+    }
+
+    & .ag-header-icon.ag-header-cell-filter-button.ag-filter-active::after,
+    & .ag-header-cell-filter-button {
+      display: none;
+    }
+
+    & .ag-header-cell-text {
+        width: 100% !important;
+        text-align: center;
     }
 
     & .ag-horizontal-left-spacer {
-      overflow-x: hidden;
+        overflow-x: hidden;
     }
-    
+
     & .ag-sort-order {
-      display: none;
+        display: none;
     }
 }

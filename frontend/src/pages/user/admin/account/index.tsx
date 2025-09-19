@@ -1,159 +1,65 @@
-import CommonButton from '@components/buttons/CommonButton';
 import ShadowCard from '@components/card/ShadowCard';
-import CommonGroupRadioCheckbox from '@components/checkbox/CommonRadioCheckboxGroup';
 import CommonHeader from '@components/container/CommonHeader';
-import CommonTableInput from '@components/input/TableInput';
-import NewGridTable from '@components/NewGridTable';
-import { usePath } from '@utils/path.util';
-import { ColDef, ICellRendererParams } from 'ag-grid-community';
+import NewGridCell from '@components/GridTable/NewGridCell';
+import NewGridFormTable from '@components/GridTable/NewGridFormTable';
+import { handleFieldChange } from '@utils/ag-grid.util';
+import { ColDef, ICellRendererParams, RowNode } from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-quartz.css';
-import React, { useEffect, useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import React, { RefObject, useEffect, useRef, useState } from 'react';
+import AccountActionBar from './AccountActionBar';
 
 type RoleProps = 'Student' | 'Faculty';
 
 interface StudentFacultyRowProps {
     [key: string]: unknown;
-    address?: React.ReactNode;
-    age?: React.ReactNode;
-    department?: React.ReactNode;
-    email?: React.ReactNode;
-    facultyId?: React.ReactNode;
-    firstName?: React.ReactNode;
-    lastName?: React.ReactNode;
-    program?: React.ReactNode;
-    sex?: React.ReactNode;
-    studentId?: React.ReactNode;
+    address?: string;
+    age?: string;
+    department?: string;
+    email?: string;
+    firstName?: string;
+    id: string;
+    lastName?: string;
+    program?: string;
+    sex?: string;
+    yearLevel?: string;
 }
 
-interface InputCellRendererParams {
-    params: ICellRendererParams<StudentFacultyRowProps>;
-    field: keyof StudentFacultyRowProps;
-};
+export interface ButtonOptionsProps {
+    condition: boolean;
+    label: string;
+    submitRef?: RefObject<HTMLButtonElement | null>;
+    onButtonClick: () => void;
+}
 
 export default function AdminAccount() {
-    // Hooks
-    const { renderOutlet } = usePath();
+    // Ref variables
+    const submitRef = useRef<HTMLButtonElement>(null);
     // State variables
     const [studentRowData, setStudentRowData] = useState<StudentFacultyRowProps[]>([]);
     const [facultyRowData, setFacultyRowData] = useState<StudentFacultyRowProps[]>([]);
     const [selectedRole, setSelectedRole] = useState<RoleProps>('Student');
     const [isModify, setIsModify] = useState(false);
+    const [isAddRemove, setIsAddRemove] = useState(false);
     const [columnDefs, setColumnDefs] = useState<ColDef<StudentFacultyRowProps>[]>([]);
     // Dummy Student data
     const dummyStudentData: StudentFacultyRowProps[] = [
-        { studentId: 'S001', firstName: 'John', lastName: 'Doe', sex: 'Male', email: 'john.doe@example.com', age: 20, address: '123 Main St', program: 'BSCS' },
-        { studentId: 'S002', firstName: 'Jane', lastName: 'Smith', sex: 'Female', email: 'jane.smith@example.com', age: 20, address: '456 Elm St', program: 'BSIT' },
-        { studentId: 'S003', firstName: 'Alice', lastName: 'Johnson', sex: 'Female', email: 'alice.johnson@example.com', age: 20, address: '789 Oak Ave', program: 'BSHM' },
-        { studentId: 'S004', firstName: 'Bob', lastName: 'Brown', sex: 'Male', email: 'bob.brown@example.com', age: 20, address: '321 Pine Rd', program: 'BSCS' },
-        { studentId: 'S005', firstName: 'Charlie', lastName: 'Davis', sex: 'Male', email: 'charlie.davis@example.com', age: 20, address: '654 Maple St', program: 'BSIT' },
-        { studentId: 'S006', firstName: 'Eve', lastName: 'Miller', sex: 'Female', email: 'eve.miller@example.com', age: 20, address: '987 Cedar Blvd', program: 'BSHM' },
-        { studentId: 'S007', firstName: 'Frank', lastName: 'Wilson', sex: 'Male', email: 'frank.wilson@example.com', age: 20, address: '246 Birch Ln', program: 'BSCS' }
+        { id: 'S005', firstName: 'Charlie', lastName: 'Davis', sex: 'Male', email: 'charlie.davis@example.com', age: '20', address: '654 Maple St', program: 'BSIT', yearLevel: '3rd Year' },
+        { id: 'S006', firstName: 'Eve', lastName: 'Miller', sex: 'Female', email: 'eve.miller@example.com', age: '20', address: '987 Cedar Blvd', program: 'BSHM', yearLevel: '2nd Year' },
+        { id: 'S003', firstName: 'Alice', lastName: 'Johnson', sex: 'Female', email: 'alice.johnson@example.com', age: '20', address: '789 Oak Ave', program: 'BSHM', yearLevel: '1st Year' },
+        { id: 'S004', firstName: 'Bob', lastName: 'Brown', sex: 'Male', email: 'bob.brown@example.com', age: '20', address: '321 Pine Rd', program: 'BSCS', yearLevel: '4th Year' },
+        { id: 'S005', firstName: 'Charlie', lastName: 'Davis', sex: 'Male', email: 'charlie.davis@example.com', age: '20', address: '654 Maple St', program: 'BSIT', yearLevel: '3rd Year' },
+        { id: 'S006', firstName: 'Eve', lastName: 'Miller', sex: 'Female', email: 'eve.miller@example.com', age: '20', address: '987 Cedar Blvd', program: 'BSHM', yearLevel: '2nd Year' },
+        { id: 'S007', firstName: 'Frank', lastName: 'Wilson', sex: 'Male', email: 'frank.wilson@example.com', age: '20', address: '246 Birch Ln', program: 'BSCS', yearLevel: '4th Year' }
     ];
     // Dummy faculty data
     const dummyFacultyData: StudentFacultyRowProps[] = [
-        { facultyId: 'F001', firstName: 'Dr. Smith', lastName: 'Anderson', sex: 'Male', email: 'smith.anderson@example.com', age: 45, address: '12 University Blvd', department: 'Computer Science' },
-        { facultyId: 'F002', firstName: 'Dr. Emily', lastName: 'Clark', sex: 'Female', email: 'emily.clark@example.com', age: 38, address: '34 College Ave', department: 'Information Technology' },
-        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
-        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
-        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
-        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
-        { facultyId: 'F001', firstName: 'Dr. Smith', lastName: 'Anderson', sex: 'Male', email: 'smith.anderson@example.com', age: 45, address: '12 University Blvd', department: 'Computer Science' },
-        { facultyId: 'F002', firstName: 'Dr. Emily', lastName: 'Clark', sex: 'Female', email: 'emily.clark@example.com', age: 38, address: '34 College Ave', department: 'Information Technology' },
-        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
-        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
-        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
-        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
-        { facultyId: 'F001', firstName: 'Dr. Smith', lastName: 'Anderson', sex: 'Male', email: 'smith.anderson@example.com', age: 45, address: '12 University Blvd', department: 'Computer Science' },
-        { facultyId: 'F002', firstName: 'Dr. Emily', lastName: 'Clark', sex: 'Female', email: 'emily.clark@example.com', age: 38, address: '34 College Ave', department: 'Information Technology' },
-        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
-        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
-        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
-        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
-        { facultyId: 'F001', firstName: 'Dr. Smith', lastName: 'Anderson', sex: 'Male', email: 'smith.anderson@example.com', age: 45, address: '12 University Blvd', department: 'Computer Science' },
-        { facultyId: 'F002', firstName: 'Dr. Emily', lastName: 'Clark', sex: 'Female', email: 'emily.clark@example.com', age: 38, address: '34 College Ave', department: 'Information Technology' },
-        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
-        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
-        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
-        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
-        { facultyId: 'F001', firstName: 'Dr. Smith', lastName: 'Anderson', sex: 'Male', email: 'smith.anderson@example.com', age: 45, address: '12 University Blvd', department: 'Computer Science' },
-        { facultyId: 'F002', firstName: 'Dr. Emily', lastName: 'Clark', sex: 'Female', email: 'emily.clark@example.com', age: 38, address: '34 College Ave', department: 'Information Technology' },
-        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
-        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
-        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
-        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
-        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
-        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
-        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
-        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
-        { facultyId: 'F001', firstName: 'Dr. Smith', lastName: 'Anderson', sex: 'Male', email: 'smith.anderson@example.com', age: 45, address: '12 University Blvd', department: 'Computer Science' },
-        { facultyId: 'F002', firstName: 'Dr. Emily', lastName: 'Clark', sex: 'Female', email: 'emily.clark@example.com', age: 38, address: '34 College Ave', department: 'Information Technology' },
-        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
-        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
-        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
-        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
-        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
-        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
-        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
-        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
-        { facultyId: 'F001', firstName: 'Dr. Smith', lastName: 'Anderson', sex: 'Male', email: 'smith.anderson@example.com', age: 45, address: '12 University Blvd', department: 'Computer Science' },
-        { facultyId: 'F002', firstName: 'Dr. Emily', lastName: 'Clark', sex: 'Female', email: 'emily.clark@example.com', age: 38, address: '34 College Ave', department: 'Information Technology' },
-        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
-        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
-        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
-        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
-        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
-        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
-        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
-        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
-        { facultyId: 'F001', firstName: 'Dr. Smith', lastName: 'Anderson', sex: 'Male', email: 'smith.anderson@example.com', age: 45, address: '12 University Blvd', department: 'Computer Science' },
-        { facultyId: 'F002', firstName: 'Dr. Emily', lastName: 'Clark', sex: 'Female', email: 'emily.clark@example.com', age: 38, address: '34 College Ave', department: 'Information Technology' },
-        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
-        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
-        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
-        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
-        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
-        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
-        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
-        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
-        { facultyId: 'F001', firstName: 'Dr. Smith', lastName: 'Anderson', sex: 'Male', email: 'smith.anderson@example.com', age: 45, address: '12 University Blvd', department: 'Computer Science' },
-        { facultyId: 'F002', firstName: 'Dr. Emily', lastName: 'Clark', sex: 'Female', email: 'emily.clark@example.com', age: 38, address: '34 College Ave', department: 'Information Technology' },
-        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
-        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
-        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
-        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
-        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
-        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
-        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
-        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
-        { facultyId: 'F001', firstName: 'Dr. Smith', lastName: 'Anderson', sex: 'Male', email: 'smith.anderson@example.com', age: 45, address: '12 University Blvd', department: 'Computer Science' },
-        { facultyId: 'F002', firstName: 'Dr. Emily', lastName: 'Clark', sex: 'Female', email: 'emily.clark@example.com', age: 38, address: '34 College Ave', department: 'Information Technology' },
-        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
-        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
-        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
-        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
-        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
-        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
-        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
-        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
-        { facultyId: 'F001', firstName: 'Dr. Smith', lastName: 'Anderson', sex: 'Male', email: 'smith.anderson@example.com', age: 45, address: '12 University Blvd', department: 'Computer Science' },
-        { facultyId: 'F002', firstName: 'Dr. Emily', lastName: 'Clark', sex: 'Female', email: 'emily.clark@example.com', age: 38, address: '34 College Ave', department: 'Information Technology' },
-        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
-        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
-        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
-        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
-        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
-        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
-        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
-        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
-        { facultyId: 'F001', firstName: 'Dr. Smith', lastName: 'Anderson', sex: 'Male', email: 'smith.anderson@example.com', age: 45, address: '12 University Blvd', department: 'Computer Science' },
-        { facultyId: 'F002', firstName: 'Dr. Emily', lastName: 'Clark', sex: 'Female', email: 'emily.clark@example.com', age: 38, address: '34 College Ave', department: 'Information Technology' },
-        { facultyId: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: 50, address: '56 Campus Rd', department: 'Hospitality Management' },
-        { facultyId: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: 42, address: '78 Academic St', department: 'Computer Science' },
-        { facultyId: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: 55, address: '90 College Lane', department: 'Information Technology' },
-        { facultyId: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: 36, address: '23 University Rd', department: 'Hospitality Management' },
-        { facultyId: 'F007', firstName: 'Dr. William', lastName: 'Wilson', sex: 'Male', email: 'william.wilson@example.com', age: 48, address: '45 Campus Blvd', department: 'Computer Science' }
+        { id: 'F002', firstName: 'Dr. Emily', lastName: 'Clark', sex: 'Female', email: 'emily.clark@example.com', age: '38', address: '34 College Ave', department: 'Information Technology' },
+        { id: 'F003', firstName: 'Dr. Robert', lastName: 'Johnson', sex: 'Male', email: 'robert.johnson@example.com', age: '50', address: '56 Campus Rd', department: 'Hospitality Management' },
+        { id: 'F004', firstName: 'Dr. Alice', lastName: 'Miller', sex: 'Female', email: 'alice.miller@example.com', age: '42', address: '78 Academic St', department: 'Computer Science' },
+        { id: 'F005', firstName: 'Dr. Michael', lastName: 'Brown', sex: 'Male', email: 'michael.brown@example.com', age: '55', address: '90 College Lane', department: 'Information Technology' },
+        { id: 'F006', firstName: 'Dr. Jessica', lastName: 'Davis', sex: 'Female', email: 'jessica.davis@example.com', age: '36', address: '23 University Rd', department: 'Hospitality Management' },
+        { id: 'F007', firstName: 'Dr. William', lastName: 'Wilson', sex: 'Male', email: 'william.wilson@example.com', age: '48', address: '45 Campus Blvd', department: 'Computer Science' }
     ];
     // User level options
     const roleOptions: RoleProps[] = [
@@ -161,22 +67,38 @@ export default function AdminAccount() {
         'Faculty'
     ];
     // Button list
-    const buttonOptions = [
+    const buttonOptions: ButtonOptionsProps[] = [
+        {
+            label: 'New Record',
+            condition: !isAddRemove && !isModify,
+            onButtonClick: handleEnableAddRemove
+        },
         {
             label: 'Modify',
-            condition: !isModify,
+            condition: !isAddRemove && !isModify,
             onButtonClick: handleEnableModification
         },
         {
             label: 'Save Changes',
-            condition: isModify,
-            onButtonClick: handleSubmitModification
+            condition: isModify || isAddRemove,
+            submitRef: submitRef,
+            onButtonClick: handleSubmit
         },
         {
             label: 'Discard Changes',
-            condition: isModify,
-            onButtonClick: handleDisableModification
+            condition: isModify || isAddRemove,
+            onButtonClick: isModify
+                ? handleDisableModification
+                : handleDisableAddRemove
         }
+    ];
+    // Year level options
+    const yearLevelOptions = [
+        '1st Year',
+        '2nd Year',
+        '3rd Year',
+        '4th Year',
+        '5th Year'
     ];
 
     useEffect(() => {
@@ -187,158 +109,170 @@ export default function AdminAccount() {
         setStudentRowData(dummyStudentData);
         setFacultyRowData(dummyFacultyData);
         setColumnDefs(getColumnDefs(selectedRole));
-    }, [selectedRole]);
-
-    function renderInputCell({ params, field }: InputCellRendererParams) {
-        const data = params.data;
-
-        if (!data) {
-            return null;
-        };
-
-        const value = data[field] ?? '';
-
-        return (
-            <div className="flex h-full items-center justify-center">
-                <CommonTableInput
-                    value={value as string}
-                    className="w-full"
-                    onChange={(e) => {
-                        data[field] = e.target.value as string;
-                        params.api.refreshCells({
-                            rowNodes: [params.node],
-                            columns: [field as string]
-                        });
-                    }}
-                />
-            </div>
-        );
-    }
+    }, [selectedRole, isAddRemove, isModify]);
 
     function getColumnDefs( selectedRole: RoleProps ): ColDef<StudentFacultyRowProps>[] {
         const isStudent = selectedRole === 'Student';
 
         return [
             {
-                field: isStudent ? 'studentId' : 'facultyId',
+                field: isStudent ? 'id' : 'id',
                 headerName: isStudent ? 'Student ID' : 'Faculty ID',
-                width: 120,
-                headerClass: 'ag-grade-header',
-                cellClass: 'text-[#080612] text-[13px] flex items-center justify-center',
-                cellRenderer: (params: ICellRendererParams<StudentFacultyRowProps>) =>
-                    renderInputCell({ params, field: isStudent ? 'studentId' : 'facultyId' })
+                minWidth: 160,
+                cellRenderer: (params: ICellRendererParams) => {
+                    const rowIndex = (params.node.rowIndex ?? 0) + 1;
+                    const data = params.data;
+                    const base = isStudent
+                        ? 'S-25'
+                        : 'F-25';
+
+                    if (isAddRemove) {
+                        return `${base}${String(rowIndex)
+                            .padStart(3, '0')}`;
+                    } else {
+                        return `${data.id}`;;
+                    }
+                }
             },
             {
                 field: 'firstName',
                 headerName: 'First Name',
-                width: 170,
-                headerClass: 'ag-grade-header',
-                cellClass: 'text-[#080612] text-[13px]',
-                cellRenderer: (params: ICellRendererParams<StudentFacultyRowProps>) =>
-                    renderInputCell({ params, field: 'firstName' })
+                minWidth: 160,
+                cellRenderer: (params: ICellRendererParams) => (
+                    <NewGridCell<StudentFacultyRowProps>
+                        field="firstName"
+                        isAddRemove={isAddRemove}
+                        isModify={isModify}
+                        inputType="alphabet"
+                        params={params}
+                    />
+                )
             },
             {
                 field: 'lastName',
                 headerName: 'Last Name',
-                width: 170,
-                headerClass: 'ag-grade-header',
-                cellClass: 'text-[#080612] text-[13px]',
-                cellRenderer: (params: ICellRendererParams<StudentFacultyRowProps>) =>
-                    renderInputCell({ params, field: 'lastName' })
-            },
-            {
-                field: 'email',
-                headerName: 'Email',
-                width: 170,
-                headerClass: 'ag-grade-header',
-                cellClass: 'text-[#080612] text-[13px]',
-                cellRenderer: (params: ICellRendererParams<StudentFacultyRowProps>) =>
-                    renderInputCell({ params, field: 'email' })
+                minWidth: 160,
+                cellRenderer: (params: ICellRendererParams) => (
+                    <NewGridCell<StudentFacultyRowProps>
+                        field="lastName"
+                        isAddRemove={isAddRemove}
+                        isModify={isModify}
+                        inputType="alphabet"
+                        params={params}
+                        maxLength={25}
+                    />
+                )
             },
             {
                 field: 'age',
                 headerName: 'Age',
-                width: 150,
-                headerClass: 'ag-grade-header',
-                cellClass: 'text-[#080612] text-[13px] flex items-center justify-center',
-                cellRenderer: (params: ICellRendererParams<StudentFacultyRowProps>) =>
-                    renderInputCell({ params, field: 'age' })
-            },
-            {
-                field: 'address',
-                headerName: 'Address',
-                flex: 2,
-                headerClass: 'ag-grade-header',
-                cellClass: 'text-[#080612] text-[13px] flex justify-center items-center',
-                cellRenderer: (params: ICellRendererParams<StudentFacultyRowProps>) =>
-                    renderInputCell({ params, field: 'address' })
+                minWidth: 120,
+                cellRenderer: (params: ICellRendererParams) => (
+                    <NewGridCell<StudentFacultyRowProps>
+                        field="age"
+                        isAddRemove={isAddRemove}
+                        isModify={isModify}
+                        inputType="number"
+                        params={params}
+                        maxLength={3}
+                    />
+                )
             },
             {
                 field: 'sex',
                 headerName: 'Sex',
-                width: 120,
-                headerClass: 'ag-grade-header',
-                cellClass: 'text-[#080612] text-[13px] flex items-center justify-center',
-                cellRenderer: (params: ICellRendererParams<StudentFacultyRowProps>) => (
-                    <select
-                        value={String(params.data?.sex) || 'Male'}
-                        onChange={(e) => {
-                            if (!params.data) return;
-                            params.data.sex = e.target.value as React.ReactNode;
-                            params.api.refreshCells({
-                                rowNodes: [params.node],
-                                columns: ['sex']
-                            });
-                        }}
-                        className="border px-2 py-1 rounded text-[13px]"
-                    >
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                        <option value="Other">Other</option>
-                    </select>
+                minWidth: 120,
+                cellRenderer: (params: ICellRendererParams) => (
+                    <NewGridCell<StudentFacultyRowProps>
+                        field="sex"
+                        isAddRemove={isAddRemove}
+                        isModify={isModify}
+                        inputType="alphabet"
+                        params={params}
+                        maxLength={6}
+                    />
+                )
+            },
+            {
+                field: 'address',
+                headerName: 'Address',
+                minWidth: 200,
+                cellRenderer: (params: ICellRendererParams) => (
+                    <NewGridCell<StudentFacultyRowProps>
+                        field="address"
+                        isAddRemove={isAddRemove}
+                        isModify={isModify}
+                        inputType="alphanumeric"
+                        params={params}
+                        maxLength={150}
+                    />
+                )
+            },
+            {
+                field: 'email',
+                headerName: 'Email',
+                minWidth: 200,
+                cellRenderer: (params: ICellRendererParams) => (
+                    <NewGridCell<StudentFacultyRowProps>
+                        field="email"
+                        isAddRemove={isAddRemove}
+                        isModify={isModify}
+                        inputType="email"
+                        params={params}
+                        maxLength={100}
+                    />
                 )
             },
             {
                 field: isStudent ? 'program' : 'department',
                 headerName: isStudent ? 'Program' : 'Department',
-                width: 120,
-                headerClass: 'ag-grade-header',
-                cellClass: 'text-[#080612] text-[13px] flex items-center justify-center',
-                cellRenderer: (params: ICellRendererParams<StudentFacultyRowProps>) => (
-                    <select
-                        value={String(
-                            isStudent ? params.data?.program : params.data?.department
-                        ) || (isStudent ? 'BSCS' : 'IT')}
-                        onChange={(e) => {
-                            if (!params.data) return;
-                            if (isStudent) {
-                                params.data.program = e.target.value as React.ReactNode;
-                            } else {
-                                params.data.department = e.target.value as React.ReactNode;
-                            }
-                            params.api.refreshCells({
-                                rowNodes: [params.node],
-                                columns: [isStudent ? 'program' : 'department']
-                            });
-                        }}
-                        className="border px-2 py-1 rounded text-[13px]"
-                    >
-                        {isStudent ? (
-                            <>
-                                <option value="BSCS">BSCS</option>
-                                <option value="BSIT">BSIT</option>
-                                <option value="BSHM">BSHM</option>
-                            </>
-                        ) : (
-                            <>
-                                <option value="HR">HR</option>
-                                <option value="Finance">Finance</option>
-                                <option value="IT">IT</option>
-                            </>
-                        )}
-                    </select>
+                minWidth: 180,
+                cellRenderer: (params: ICellRendererParams) => (
+                    <NewGridCell<StudentFacultyRowProps>
+                        field={isStudent ? 'program' : 'department'}
+                        isAddRemove={isAddRemove}
+                        isModify={isModify}
+                        inputType="alphabet"
+                        params={params}
+                        maxLength={8}
+                    />
                 )
-            }
+            },
+            ...(isStudent ? [{
+                field: 'yearLevel',
+                headerName: 'Year Level',
+                minWidth: 150,
+                cellRenderer: (params: ICellRendererParams) => {
+                    const data = params.data;
+                    const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+                        handleFieldChange<StudentFacultyRowProps>({
+                            data,
+                            fieldName: 'yearLevel',
+                            value: e.target.value,
+                            node: params.node as RowNode,
+                            api: params.api
+                        });
+                    };
+
+                    if (!data) {
+                        return null;
+                    } else if (isAddRemove) {
+                        return (
+                            <select
+                                value={data.yearLevel ?? ''}
+                                onChange={handleChange}
+                                className="border border-gray-300 px-2 py-[2px] rounded w-full"
+                            >
+                                {yearLevelOptions.map((opt) => (
+                                    <option key={opt} value={opt}>{opt}</option>
+                                ))}
+                            </select>
+                        );
+                    } else {
+                        return `${data.yearLevel}`;
+                    }
+                }
+            }] : [])
         ];
     }
 
@@ -350,57 +284,55 @@ export default function AdminAccount() {
         setIsModify(false);
     }
 
-    function handleSubmitModification() {
-        alert('Modification saved successfully');
+    function handleEnableAddRemove() {
+        setIsAddRemove(true);
     }
 
-    return renderOutlet
-        ? <Outlet />
-        : (
-            <div className="flex flex-col gap-[20px]">
-                <CommonHeader title="Account Management" />
-                <ShadowCard>
-                    <div className="flex justify-between p-[20px] w-full">
-                        <div className="flex gap-[12px]">
-                            {buttonOptions.map((btn, btnKey) => (
-                                <CommonButton
-                                    buttonLabel={btn.label}
-                                    buttonStyle="blue"
-                                    className={
-                                        btn.condition ? 'block' : 'hidden'
-                                    }
-                                    isRoundedFull={false}
-                                    key={`${btn.label}-${btnKey}`}
-                                    size="m"
-                                    onButtonClick={btn.onButtonClick}
-                                />
-                            ))}
-                        </div>
-                        <CommonGroupRadioCheckbox
-                            options={roleOptions}
-                            value={selectedRole}
-                            onChange={setSelectedRole}
-                        />
-                    </div>
-                </ShadowCard>
-                <ShadowCard>
-                    <div className="flex flex-col gap-[12px] justify-end p-[20px] w-full">
-                        <NewGridTable<StudentFacultyRowProps>
-                            columnDefs={columnDefs}
-                            domLayout="normal"
-                            height={400}
-                            isPaginated={true}
-                            pagination={true}
-                            paginationPageSize={10}
-                            paginationPageSizeSelector={[10, 20, 50]}
-                            rowData={
-                                selectedRole === 'Student'
-                                    ? studentRowData
-                                    : facultyRowData
-                            }
-                        />
-                    </div>
-                </ShadowCard>
-            </div>
-        );
+    function handleDisableAddRemove() {
+        setIsAddRemove(false);
+    }
+
+    function handleSubmit() {
+        if (submitRef.current) {
+            submitRef.current.click();
+        }
+
+        alert('Modification saved successfully');
+
+        if (isModify) {
+            handleEnableAddRemove();
+        } else if (isAddRemove) {
+            handleDisableAddRemove();
+        }
+    }
+
+    return (
+        <div className="flex flex-col gap-[20px]">
+            <CommonHeader title="Account Management" />
+            <AccountActionBar<RoleProps>
+                buttonOptions={buttonOptions}
+                options={roleOptions}
+                value={selectedRole}
+                onChange={setSelectedRole}
+            />
+            <ShadowCard>
+                <div className="flex flex-col gap-[12px] justify-end p-[20px] w-full">
+                    <NewGridFormTable<StudentFacultyRowProps>
+                        columnDefs={columnDefs}
+                        domLayout="normal"
+                        height={580}
+                        isModify={isModify}
+                        hasAddRemoveColumn={isAddRemove}
+                        pagination={true}
+                        rowData={
+                            selectedRole === 'Student'
+                                ? studentRowData
+                                : facultyRowData
+                        }
+                        submitRef={submitRef}
+                    />
+                </div>
+            </ShadowCard>
+        </div>
+    );
 }
