@@ -75,8 +75,8 @@ export default function NewGridFormTable<TData extends { id: StringNum }>({
             headerClass: 'ag-grade-header',
             headerName: '',
             field: 'buttons' as ColDefField<TData, unknown>,
-            pinned: 'left',
-            width: 80,
+            minWidth: 80,
+            maxWidth: 80,
             cellRenderer: (params: ICellRendererParams<TData>) => {
                 const rowIndex = params.node.rowIndex;
 
