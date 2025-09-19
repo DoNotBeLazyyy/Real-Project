@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    /* JavaScript output options */
+    "target": "ES2022",              // Modern JS features for Node.js
+    "module": "CommonJS",            // Node.js default module system
+    "outDir": "./dist",              // Compiled output
+    "rootDir": "./src",              // Source files
+
+    /* Type checking */
+    "strict": true,                  // Enable all strict type-checking options
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+
+    /* Module resolution */
+    "moduleResolution": "node",
+    "esModuleInterop": true,         // Enable import compatibility with CommonJS
+    "allowSyntheticDefaultImports": true,
+
+    /* Advanced */
+    "resolveJsonModule": true,       // Allow importing JSON files
+    "skipLibCheck": true,            // Skip type checking of declaration files
+
+    /* Source maps for easier debugging */
+    "sourceMap": true,
+
+    /* Linting */
+    "baseUrl": ".",
+    "paths": {
+      "@utils/*": ["src/utils/*"],
+      "@services/*": ["src/services/*"],
+      "@types/*": ["src/types/*"]
+    }
+  },
+  "include": ["src/**/*"]
+}
