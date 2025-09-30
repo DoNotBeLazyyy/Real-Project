@@ -1,68 +1,215 @@
 import { Request, Response } from 'express';
+import { RowDataPacket } from 'mysql2/promise';
 import createPool from '../db.js';
 import { StudentProps } from '../types/student.type.js';
+import { snakeToCamelArray, invalidArray } from '../utils/array.util.js';
+import { makeResponse } from '../utils/response.util.js';
 
 // Create the pool once and reuse
 const pool = createPool();
 
 export async function getAllStudents(_req: Request, res: Response) {
+    const sql = `
+        SELECT *
+        FROM student
+        WHERE is_deleted IS NULL;
+    `;
+
     try {
-        const [rows] = await pool.query('SELECT * FROM student');
-        res.json(rows);
+        const [rows] = await pool
+            .query<RowDataPacket[]>(sql);
+        const studentList = snakeToCamelArray(rows) as StudentProps[];
+
+        res.json(
+            makeResponse(
+                200,
+                studentList,
+                'Students fetched successfully',
+                'SUCCESS'
+            )
+        );
     } catch (err) {
-        res.status(500).json({ error: err });
+        res.status(500).json(
+            makeResponse(
+                500,
+                [],
+                'Failed to fetch students',
+                'ERROR'
+            )
+        );
     }
 }
 
 export async function addStudents(req: Request, res: Response) {
-    const students: StudentProps[] = req.body;
+    const studentList: StudentProps[] = req.body;
+    const sql = `
+        INSERT INTO student
+        (
+            id,
+            address,
+            age,
+            email,
+            first_name,
+            last_name,
+            program,
+            sex,
+            year_level
+        )
+        VALUES ?
+    `;
+
+
+    if (invalidArray(studentList)) {
+        return res.status(400).json(
+            makeResponse(
+                400,
+                [],
+                'No student list provided',
+                'ERROR'
+            )
+        );
+    }
 
     try {
-        const sql = `INSERT INTO student
-            (id, first_name, last_name, sex, email, age, address, program, year_level)
-            VALUES ?`;
-
-        // Transform data into array of arrays for bulk insert
-        const values = students.map(s => [
-            s.id, s.firstName, s.lastName, s.sex,
-            s.email, s.age, s.address, s.program,
+        const values = studentList.map(s => [
+            s.id,
+            s.address,
+            s.age,
+            s.email,
+            s.firstName,
+            s.lastName,
+            s.program,
+            s.sex,
             s.yearLevel
         ]);
 
-        await pool.query(sql, [values]); // bulk insert
-        res.json({ message: `${students.length} students added successfully` });
+        await pool.query(sql, [values]);
+
+        res.json(
+            makeResponse(
+                200,
+                studentList,
+                `${studentList.length} students added successfully`,
+                'SUCCESS'
+            )
+        );
     } catch (err) {
-        console.log('error: ', err);
-        res.status(500).json({ error: err });
+        res.status(500).json(
+            makeResponse(
+                500,
+                [],
+                'Failed to add students',
+                'ERROR'
+            )
+        );
     }
 }
 
-export async function updateStudent(req: Request, res: Response) {
-    const id = req.params.id;
-    const data = req.body;
+export async function updateStudents(req: Request, res: Response) {
+    const studentList: StudentProps[] = req.body;
+    const sql = `
+        UPDATE student
+        SET
+            first_name = ?,
+            last_name = ?,
+            sex = ?,
+            email = ?,
+            age = ?,
+            address = ?,
+            program = ?,
+            year_level = ?
+        WHERE id = ?
+    `;
+
+    if (invalidArray(studentList)) {
+        return res.status(400).json(
+            makeResponse(
+                400,
+                [],
+                'No student IDs provided',
+                'ERROR'
+            )
+        );
+    }
 
     try {
-        const sql = 'UPDATE student SET first_name=?, last_name=?, sex=?, email=?, age=?, address=?, program=?, year_level=? WHERE id=?';
-        const values = [
-            data.first_name, data.last_name, data.sex,
-            data.email, data.age, data.address,
-            data.program, data.year_level,
-            id
-        ];
-        await pool.query(sql, values);
-        res.json({ message: 'Student updated successfully' });
+        const updatePromises = studentList.map(s => {
+            const values = [
+                s.firstName,
+                s.lastName,
+                s.sex,
+                s.email,
+                s.age,
+                s.address,
+                s.program,
+                s.yearLevel,
+                s.id
+            ];
+            return pool.query(sql, values);
+        });
+
+        await Promise.all(updatePromises);
+
+        res.json(
+            makeResponse(
+                200,
+                studentList,
+                'Students updated successfully',
+                'SUCCESS'
+            )
+        );
     } catch (err) {
-        res.status(500).json({ error: err });
+        res.status(500).json(
+            makeResponse(
+                500,
+                [],
+                'Failed to update students',
+                'ERROR'
+            )
+        );
     }
 }
 
 export async function deleteStudent(req: Request, res: Response) {
-    const id = req.params.id;
+    const idList: string[] = req.body.data;
+    const sql = `
+        UPDATE student
+        SET is_deleted = NOW()
+        WHERE id IN (?)
+    `;
+
+    console.log(invalidArray(idList));
+
+    if (invalidArray(idList)) {
+        return res.status(400).json(
+            makeResponse(
+                400,
+                [],
+                'No student IDs provided',
+                'ERROR'
+            )
+        );
+    }
 
     try {
-        await pool.query('DELETE FROM student WHERE id = ?', [id]);
-        res.json({ message: 'Student deleted successfully' });
+        await pool.query(sql, [idList]);
+
+        res.json(
+            makeResponse(
+                200,
+                idList,
+                'Students deleted successfully',
+                'SUCCESS'
+            )
+        );
     } catch (err) {
-        res.status(500).json({ error: err });
+        res.status(500).json(
+            makeResponse(
+                500,
+                [],
+                'Failed to delete students',
+                'ERROR'
+            )
+        );
     }
 }

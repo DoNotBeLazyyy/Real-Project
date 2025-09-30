@@ -18,14 +18,14 @@ const eslintConfig = typescriptESLint.config(
         languageOptions: {
             ecmaVersion: 'latest',
             globals: {
-                ...globals.node
+                ...globals.node // Node globals instead of browser
             },
             parser: typescriptESLint.parser,
             parserOptions: {
                 project: true,
-                tsconfigRootDir: import.meta.dir
+                tsconfigRootDir: import.meta.dir // make sure your tsconfig.json is in project root
             },
-            sourceType: 'script'
+            sourceType: 'module' // Node ESM
         },
         plugins: {
             '@typescript-eslint': typescriptESLint.plugin

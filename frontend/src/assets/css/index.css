@@ -70,6 +70,27 @@ ul, li {
       background-color: #bbdfff;
     }
 
+    & .ag-header-cell.ag-column-first.ag-focus-managed,
+    & .ag-cell.ag-cell-not-inline-editing.ag-cell-normal-height.ag-column-first {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    & .ag-cell-label-container {
+      background-color: #0C60A1;
+    }
+
+    & .ag-labeled.ag-label-align-right.ag-checkbox.ag-input-field.ag-header-select-all {
+      position: absolute;
+      margin: 0 !important;
+    }
+
+    & .ag-selection-checkbox {
+      margin: 0 !important;
+    }
+
     & .ag-header-cell-label,
     & .ag-header-cell-comp-wrapper,
     & .ag-cell {

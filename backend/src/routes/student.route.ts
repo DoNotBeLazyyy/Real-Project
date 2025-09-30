@@ -1,11 +1,11 @@
 import express from 'express';
-import { addStudents, deleteStudent, getAllStudents, updateStudent } from '../services/student.service.js';
+import { addStudents, deleteStudent, getAllStudents, updateStudents } from '../services/student.service.js';
 
 const studentRouter = express.Router();
 
-studentRouter.get('/', getAllStudents);
+studentRouter.get('/get', getAllStudents);
 studentRouter.post('/add', addStudents);
-studentRouter.put('/:id', updateStudent);
-studentRouter.delete('/:id', deleteStudent);
+studentRouter.put('/update', updateStudents);
+studentRouter.delete('/delete', deleteStudent);
 
 export default studentRouter;

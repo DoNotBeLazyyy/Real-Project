@@ -1,58 +1,97 @@
 import MinusIcon from '@components/icons/MinusIcon';
 import PlusIcon from '@components/icons/PlusIcon';
-import { StateProps, StringNum } from '@type/common.type';
-import { ColDef, ColDefField, ICellRendererParams } from 'ag-grid-community';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useActionStore } from '@store/useActionStore';
+import { FacultyAccountColumnProps } from '@type/account.type';
+import { DataStoreHook, NullGridApi, UnknownObject } from '@type/common.type';
+import { GridColumnsProps } from '@type/grid.type';
+import { formatHeaderName } from '@type/string.util';
+import { ColDef, ColDefField, ICellRendererParams, SelectionChangedEvent } from 'ag-grid-community';
+import { RefObject, useEffect, useMemo, useState } from 'react';
 import { useForm, FormProvider, FieldErrors } from 'react-hook-form';
+import NewGridCell from './NewGridCell';
 import NewGridTable, { NewGridTableProps } from './NewGridTable';
 
 interface FormValues<TData> {
-  gridData: TData[];
+    gridData: TData[];
 }
 
-interface NewGridFormTableProps<TData> extends NewGridTableProps<TData> {
-    submitRef?: React.Ref<HTMLButtonElement>;
-    isModify?: boolean;
-    hasAddRemoveColumn?: boolean;
-    onCreateEmptyRow?: (data: TData[]) => void;
-    onSubmit?: VoidFunction;
+interface NewGridFormTableProps<TData> extends Omit<NewGridTableProps<TData>, 'setGridApi' | 'gridApi'> {
+    columns: GridColumnsProps<TData>[];
+    fieldId: string;
+    submitRef?: RefObject<HTMLButtonElement | null>;
+    onCreateNewRow: () => void;
+    onSubmit?: (modifiedData?: TData[]) => void;
+    useDataStore: DataStoreHook<TData>;
 }
 
-export default function NewGridFormTable<TData extends { id: StringNum }>({
-    columnDefs,
-    hasAddRemoveColumn,
-    isModify,
+export default function NewGridFormTable<TData>({
+    columns,
     rowData: initialData,
+    fieldId,
     submitRef,
-    onCreateEmptyRow,
+    onCreateNewRow,
     onSubmit,
+    useDataStore,
     ...props
 }: NewGridFormTableProps<TData>) {
+    // Store
+    const { newRowData, rowData, selectedRowData, setData } = useDataStore();
+    const { isAddRemove, isDelete, isModify } = useActionStore();
     // Forms hook
     const methods = useForm<FormValues<TData>>({
         defaultValues: { gridData: initialData }
     });
-    // State variables
-    const [rowData, setRowData] = useState<TData[]>([]);
-    const [newRowData, setNewRowData] = useState<TData[]>([]);
-    // Column definitions
+    // Grid api
+    const [gridApi, setGridApi] = useState<NullGridApi>(null);
+    // Generated column definitions
+    // Columns based on the data fields
+    const dataColumns: ColDef<TData>[] = columns.map((col) => {
+        const field = col.field; // keyof TData
+
+        return {
+            field,
+            headerName: formatHeaderName(field),
+            minWidth: 160,
+            maxWidth: 160,
+            cellRenderer: (params: ICellRendererParams) => (
+                <NewGridCell<FacultyAccountColumnProps>
+                    field={field}
+                    inputType={col.inputType}
+                    maxLength={col.maxLength}
+                    params={params}
+                />
+            )
+        } as ColDef<TData>;
+    });
+    // Final column definitions including extra columns like status or add/remove
     const colDefs = useMemo(() => {
-        if (!columnDefs) {
-            return;
+        if (!columns) return [];
+
+        const finalColumns: ColDef<TData>[] = [];
+
+        if (isModify) {
+            finalColumns.push({
+                field: 'status',
+                headerName: 'Status',
+                minWidth: 120,
+                maxWidth: 120,
+                sortable: false
+            } as ColDef<TData>);
         }
 
-        if (hasAddRemoveColumn) {
-            const addRemoveColumn = handleAddRemoveColumn(setNewRowData);
-
-            return [addRemoveColumn, ...columnDefs];
+        if (isAddRemove) {
+            const addRemoveColumn = handleAddRemoveColumn() as ColDef<TData>;
+            finalColumns.push(addRemoveColumn);
         }
 
-        return columnDefs;
-    }, [columnDefs, hasAddRemoveColumn, isModify]);
+        finalColumns.push(...dataColumns);
+
+        return finalColumns;
+    }, [columns, isAddRemove, isModify]);
 
     useEffect(() => {
         if (initialData) {
-            setRowData(initialData);
+            setData('rowData', initialData);
         }
     }, [initialData]);
 
@@ -60,17 +99,38 @@ export default function NewGridFormTable<TData extends { id: StringNum }>({
         methods.setValue('gridData', rowData);
     }, [rowData]);
 
-    function handleFormSubmit(data: FormValues<TData>) {
+    function handleFormSubmit() {
+        if (isModify) {
+            const newModifiedRows: TData[] = [];
+
+            gridApi?.forEachNode((node) => {
+                const data = node.data as UnknownObject;
+
+                if (data?.status) {
+                    newModifiedRows.push(data as TData);
+                    node.setData({ ...data, status: undefined });
+                }
+            });
+
+            if (newModifiedRows.length > 0) {
+                onSubmit?.(newModifiedRows);
+            }
+
+            return;
+        }
+
+        if (newRowData.length < 1 && selectedRowData.length < 1) {
+            return;
+        }
+
         onSubmit?.();
-        console.log('Form data + AG Grid data:', data);
     }
 
     function handleFormError(errors: FieldErrors<FormValues<TData>>) {
         console.log('Form errors:', errors);
     }
 
-    // Generic Plus Column
-    function handleAddRemoveColumn(setData: StateProps<TData[]>): ColDef<TData> {
+    function handleAddRemoveColumn(): ColDef<TData> {
         return {
             headerClass: 'ag-grade-header',
             headerName: '',
@@ -88,13 +148,7 @@ export default function NewGridFormTable<TData extends { id: StringNum }>({
                     <MinusIcon
                         className="bg-[#FFFFFF] border-[#0C60A1] border-[2px] cursor-pointer p-[2px] rounded-full text-[#0C60A1]"
                         strokeWidth={3}
-                        onClick={() => {
-                            setData((prev) => {
-                                const updated = [...prev];
-                                updated.splice(rowIndex, 1);
-                                return updated;
-                            });
-                        }}
+                        onClick={() => {}}
                     />
                 );
             },
@@ -103,56 +157,53 @@ export default function NewGridFormTable<TData extends { id: StringNum }>({
                     <PlusIcon
                         className="bg-[#FFFFFF] border-[#0C60A1] border-[1px] cursor-pointer p-[2px] rounded-full text-[#0C60A1]"
                         strokeWidth={3}
-                        onClick={() => {
-                            setData((prev) => {
-                                const newRow: TData = (
-                                    onCreateEmptyRow
-                                        ? onCreateEmptyRow(prev)
-                                        : handleCreateEmptyRow(prev)
-                                ) as TData;
-
-                                return [...prev, newRow];
-                            });
-                        }}
+                        onClick={onCreateNewRow}
                     />
                 );
             }
         };
     }
 
-    function handleCreateEmptyRow(data: TData[]): TData {
-        if (!data || data.length === 0) return {} as TData;
-        const emptyRow = {} as TData;
-        (Object.keys(data[0]) as (keyof TData)[]).forEach((key) => {
-            emptyRow[key] = '' as TData[keyof TData];
-        });
-        return emptyRow;
+    function handleSelectedRows(event: SelectionChangedEvent) {
+        const selected = event.api.getSelectedRows();
+        const selectedIds = selected.map((row) => row[fieldId]);
+        setData('selectedRowData', selectedIds);
     }
 
     return (
         <FormProvider {...methods}>
-            <div>
-                <NewGridTable<TData>
-                    columnDefs={colDefs}
-                    rowData={
-                        hasAddRemoveColumn
-                            ? newRowData
-                            : rowData
-                    }
-                    {...props}
+            <NewGridTable<TData>
+                columnDefs={colDefs}
+                rowData={
+                    isAddRemove
+                        ? newRowData
+                        : rowData
+                }
+                selection={
+                    isDelete
+                        ? {
+                            checkboxes: true,
+                            enableClickSelection: false,
+                            headerCheckbox: true,
+                            mode: 'multiRow',
+                            selectAll: 'currentPage'
+                        }
+                        : undefined
+                }
+                hasFloatingFilter={!isAddRemove}
+                gridApi={gridApi}
+                setGridApi={setGridApi}
+                onSelectionChanged={handleSelectedRows}
+                {...props}
+            />
+            {submitRef && (
+                <button
+                    className="hidden"
+                    ref={submitRef}
+                    type="submit"
+                    onClick={methods.handleSubmit(handleFormSubmit, handleFormError)}
                 />
-                {submitRef && (
-                    <button
-                        className="hidden"
-                        ref={submitRef}
-                        type="submit"
-                        onClick={(e) => {
-                            console.log('Hidden button clicked!', e);
-                            methods.handleSubmit(handleFormSubmit, handleFormError);
-                        }}
-                    />
-                )}
-            </div>
+            )}
         </FormProvider>
     );
 }

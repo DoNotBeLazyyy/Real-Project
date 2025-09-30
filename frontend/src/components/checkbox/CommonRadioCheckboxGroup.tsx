@@ -1,42 +1,43 @@
-import { useState } from 'react';
+import { StringUndefined } from '@type/common.type';
+import { useEffect, useState } from 'react';
 import CommonRadioCheckbox from './CommonRadioCheckbox';
 
-export interface CommonGroupRadioCheckboxProps<T extends string> {
+export interface CommonGroupRadioCheckboxProps {
     disabled?: boolean;
-    options?: T[];
-    value?: T;
-    onChange?: (selected: T) => void;
+    radioOptions: string[];
+    onChangeSelect?: (selected: string) => void;
 }
 
-export default function CommonGroupRadioCheckbox<T extends string>({
+export default function CommonGroupRadioCheckbox({
     disabled = false,
-    options,
-    value,
-    onChange
-}: CommonGroupRadioCheckboxProps<T>) {
-    const [selected, setSelected] = useState<T | undefined>(value);
+    radioOptions,
+    onChangeSelect
+}: CommonGroupRadioCheckboxProps) {
+    const [selected, setSelected] = useState<StringUndefined>('');
 
-    // Sync external value prop if controlled
-    if (value !== undefined && value !== selected) {
-        setSelected(value);
-    }
+    useEffect(() => {
+        setSelected(radioOptions[0]);
+    }, []);
 
-    const handleSelect = (label: T) => {
-        if (disabled) return;
+    function handleSelect(label: string) {
+        if (disabled) {
+            return;
+        };
+
         setSelected(label);
-        onChange?.(label);
+        onChangeSelect?.(label);
     };
 
     return (
         <div className="flex gap-[16px]">
-            {options?.map((label, idx) => (
+            {radioOptions?.map((option, idx) => (
                 <CommonRadioCheckbox
-                    checked={selected === label}
+                    checked={selected === option}
                     disabled={disabled}
                     key={idx}
-                    label={label}
+                    label={option}
                     name="common-group-radio-checkbox"
-                    onChange={() => handleSelect(label)}
+                    onChange={handleSelect}
                 />
             ))}
         </div>

@@ -1,9 +1,10 @@
 import { InputType } from '@type/grid.type';
 import { classMerge } from '@utils/css.util';
-import React, { InputHTMLAttributes, useState } from 'react';
+import React, { InputHTMLAttributes, Ref, useState } from 'react';
 
 export interface ValidCommonInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
     inputType?: InputType | '';
+    ref?: Ref<HTMLInputElement> | null;
     onChange?: VoidFunction | ((data: string) => void);
 }
 
@@ -14,6 +15,7 @@ export interface ValidCommonInputProps extends Omit<InputHTMLAttributes<HTMLInpu
 export default function ValidCommonInput({
     className = '',
     inputType,
+    ref,
     onChange,
     ...props
 }: ValidCommonInputProps) {
@@ -24,10 +26,11 @@ export default function ValidCommonInput({
         alphabet: /[^a-zA-Z\s]/g,
         number: /[^0-9]/g,
         alphanumeric: /[^a-zA-Z0-9]/g,
-        email: /[^a-zA-Z0-9@._-]/g
+        email: /[^a-zA-Z0-9@._-]/g,
+        any: /(?!)/
     };
 
-    function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
         let val = e.target.value;
 
         if (inputType) {
@@ -48,9 +51,10 @@ export default function ValidCommonInput({
                     className
                 )
             }
+            ref={ref}
             type="text"
             value={inputValue}
-            onChange={handleChange}
+            onChange={handleInputChange}
             {...props}
         />
     );

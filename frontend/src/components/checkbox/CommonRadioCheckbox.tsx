@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react';
 interface CommonRadioCheckboxProps {
     checked?: boolean;
     disabled?: boolean;
-    label?: string;
+    label: string;
     name?: string;
-    onChange?: (checked: boolean) => void;
+    onChange?: (selected: string) => void;
 }
 
 export default function CommonRadioCheckbox({
@@ -26,9 +26,12 @@ export default function CommonRadioCheckbox({
     }, [checked]);
 
     function handleToggle() {
-        if (disabled || internalChecked) return; // radio cannot uncheck itself
+        if (disabled || internalChecked) {
+            return;
+        };
+
         setInternalChecked(true);
-        onChange?.(true);
+        onChange?.(label);
     }
 
     return (

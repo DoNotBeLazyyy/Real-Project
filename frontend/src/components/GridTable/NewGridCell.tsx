@@ -1,50 +1,72 @@
 import ValidCommonInput, { ValidCommonInputProps } from '@components/input/ValidCommonInput';
+import { useActionStore } from '@store/useActionStore';
+import { UnknownObject } from '@type/common.type';
 import { InputType } from '@type/grid.type';
 import { ICellRendererParams } from 'ag-grid-community';
 
 interface NewGridCellProps<TData> extends ValidCommonInputProps {
     field: string;
     inputType?: InputType;
-    isAddRemove?: boolean;
-    isModify?: boolean;
+    options?: string[];
     params?: ICellRendererParams<TData, unknown>;
 }
 
 export default function NewGridCell<TData>({
     field,
     inputType,
-    isAddRemove,
-    isModify,
+    options,
     params,
     ...props
 }: NewGridCellProps<TData>) {
-    const data = params?.data;
-    const value = ((data as Record<string, unknown>)[field] ?? '') as string;
+    const { isAddRemove, isModify } = useActionStore();
+    const data = params?.data as TData;
+    const rowData = data as UnknownObject;
+    const updatedData = rowData[field] as string;
+    const preVal = params?.api.getCellValue({ rowNode: params.node, colKey: field });
 
-    function handleChange(val: string) {
-        if (!field || !params) return;
+    function handleChange(newVal: string) {
+        rowData[field] = newVal;
 
-        (data as Record<string, unknown>)[field] = val;
+        if (!data) return;
 
-        params.api.refreshCells({
-            rowNodes: [params.node],
-            columns: [field] // ✅ safe now, because we checked
-        });
+        if (isModify && preVal !== newVal) {
+            params?.node.setData({ ...data, status: 'modified' });
+        } else {
+            params?.node.setData(data);
+        }
     }
 
-    if (!data) {
-        return null;
-    } else if (isAddRemove) {
+    if (!data) return null;
+
+    if (!isAddRemove && !isModify) return updatedData ?? '';
+
+    if (options) {
+        return (
+            <select
+                value={updatedData}
+                onChange={(e) => handleChange(e.target.value)}
+                className="border border-gray-300 px-2 py-[2px] rounded w-full"
+            >
+                {options.map((opt) => (
+                    <option key={opt} value={opt}>
+                        {opt}
+                    </option>
+                ))}
+            </select>
+        );
+    }
+
+    if (inputType) {
         return (
             <ValidCommonInput
                 className="w-full"
                 inputType={inputType}
-                value={value}
+                value={updatedData}
                 onChange={handleChange}
                 {...props}
             />
         );
-    } else {
-        return value ?? '';
     }
+
+    return updatedData ?? '';
 }

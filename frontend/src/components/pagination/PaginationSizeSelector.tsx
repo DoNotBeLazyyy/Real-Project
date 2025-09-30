@@ -12,7 +12,7 @@ export default function PaginationSizeSelector<T>({
         onUpdatePaginationSize?.(size);
     }
 
-    return(
+    return (
         <div className="flex gap-[8px] items-center">
             <span>Page Size:</span>
             <select

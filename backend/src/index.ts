@@ -19,7 +19,7 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // Routes
-app.use('/api/students', studentRouter)
+app.use('/api/student', studentRouter)
 
 // Start server
 app.listen(port, () => {

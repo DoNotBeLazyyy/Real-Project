@@ -4,7 +4,7 @@ import mysql from 'mysql2/promise';
 dotenv.config();
 
 export default function createPool() {
-  try {
+        try {
     const pool = mysql.createPool({
       host: process.env.DB_HOST,
       user: process.env.DB_USER,
@@ -16,7 +16,7 @@ export default function createPool() {
     });
 
     console.log('Database pool created');
-    return pool; // return pool for queries
+    return pool;
   } catch (err) {
     console.error('DB pool creation failed:', err);
     process.exit(1);

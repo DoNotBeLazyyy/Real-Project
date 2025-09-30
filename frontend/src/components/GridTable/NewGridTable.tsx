@@ -1,4 +1,4 @@
-import { NullGridApi } from '@type/common.type';
+import { NullGridApi, StateProps, UnknownObject } from '@type/common.type';
 import { getMinWidth } from '@utils/ag-grid.util';
 import { ColDef, GridApi, GridReadyEvent } from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
@@ -14,22 +14,25 @@ export interface NewGridTableProps<T> extends AgGridReactProps {
     hasFloatingFilter?: boolean;
     height?: number;
     minCharWidth?: number;
+    gridApi: NullGridApi;
     rowData?: T[];
+    setGridApi: StateProps<NullGridApi>;
 }
 
-export default function NewGridTable<T extends Record<string, unknown>>({
+export default function NewGridTable<T>({
     columnDefs,
     domLayout = 'autoHeight',
     hasFloatingFilter,
     height,
     minCharWidth,
+    gridApi,
     rowData: tableRowData,
     pagination,
+    setGridApi,
     ...props
 }: NewGridTableProps<T>) {
     // Use internal state for rowData
     const [rowData, setRowData] = useState<T[]>([]);
-    const [gridApi, setGridApi] = useState<NullGridApi>(null);
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [paginationSize, setPaginationSize] = useState(10);
@@ -62,7 +65,7 @@ export default function NewGridTable<T extends Record<string, unknown>>({
 
             if (col.field && rowData.length > 0) {
                 const contentWidth = getMinWidth(
-                    rowData as Record<string, unknown>[],
+                    rowData as UnknownObject[],
                     col.field.toString(),
                     8
                 );
