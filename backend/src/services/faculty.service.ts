@@ -1,52 +1,54 @@
 import { Request, Response } from 'express';
 import { RowDataPacket } from 'mysql2/promise';
 import createPool from '../db.js';
-import { StudentProps } from '../types/student.type.js';
+import { FacultyProps } from '../types/faculty.type.js';
 import { snakeToCamelArray, invalidArray } from '../utils/array.util.js';
 import { makeResponse } from '../utils/response.util.js';
 
 // Create the pool once and reuse
 const pool = createPool();
 
-export async function getStudents(req: Request, res: Response) {
+export async function getFaculties(req: Request, res: Response) {
     const status = req.query.status;
     const sqlActive = `
         SELECT
             address,
             age,
+            department,
             email,
+            faculty_id,
+            faculty_number,
             first_name,
             last_name,
-            program,
-            sex,
-            student_id,
-            student_number,
-            year_level
-        FROM student
+            sex
+        FROM faculty
         WHERE deleted_at IS NULL
-        ORDER BY student_id ASC;
+        ORDER BY faculty_id ASC;
     `;
     const sqlAll = `
         SELECT
             address,
             age,
+            department,
             email,
+            faculty_id,
+            faculty_number,
             first_name,
             last_name,
-            program,
-            sex,
-            student_id,
-            student_number,
-            year_level
-        FROM student
-        ORDER BY student_id ASC`;
-    const sql = status === 'active' ? sqlActive : sqlAll;
+            sex
+        FROM faculty
+        ORDER BY faculty_id ASC;
+    `;
+    const sql = status === 'active'
+        ? sqlActive
+        : sqlAll;
+
 
     try {
         const [rows] = await pool.query<RowDataPacket[]>(sql);
-        const studentList = snakeToCamelArray(rows) as StudentProps[];
+        const facultyList = snakeToCamelArray(rows) as FacultyProps[];
 
-        res.json(makeResponse({ result: studentList }));
+        res.json(makeResponse({ result: facultyList }));
     } catch (err) {
         res.status(500).json(
             makeResponse({
@@ -59,51 +61,49 @@ export async function getStudents(req: Request, res: Response) {
     }
 }
 
-export async function addStudents(req: Request, res: Response) {
-    const studentList: StudentProps[] = req.body;
+export async function addFaculties(req: Request, res: Response) {
+    const facultyList: FacultyProps[] = req.body;
     const sql = `
-        INSERT INTO student
+        INSERT INTO faculty
         (
             address,
             age,
+            department,
             email,
+            faculty_number,
             first_name,
             last_name,
-            program,
-            sex,
-            student_number,
-            year_level
+            sex
         )
         VALUES ?
     `;
 
-    if (invalidArray(studentList)) {
+    if (invalidArray(facultyList)) {
         return res.status(400).json(
             makeResponse({
                 result: [],
                 retCode: 'ERROR',
-                retMsg: 'No student list provided',
+                retMsg: 'No faculty list provided',
                 status: 400,
             })
         );
     }
 
     try {
-        const values = studentList.map(s => [
+        const values = facultyList.map(s => [
             s.address,
             s.age,
+            s.department,
             s.email,
+            s.facultyNumber,
             s.firstName,
             s.lastName,
-            s.program,
             s.sex,
-            s.studentNumber,
-            s.yearLevel,
         ]);
 
         await pool.query(sql, [values]);
 
-        res.json(makeResponse({ result: studentList }));
+        res.json(makeResponse({ result: facultyList }));
     } catch (err) {
         res.status(500).json(
             makeResponse({
@@ -116,52 +116,50 @@ export async function addStudents(req: Request, res: Response) {
     }
 }
 
-export async function updateStudents(req: Request, res: Response) {
-    const studentList: StudentProps[] = req.body;
+export async function updateFaculties(req: Request, res: Response) {
+    const facultyList: FacultyProps[] = req.body;
     const sql = `
-        UPDATE student
+        UPDATE faculty
         SET
             address = ?,
             age = ?,
+            department = ?,
             email = ?,
             first_name = ?,
             last_name = ?,
-            program = ?,
-            sex = ?,
-            year_level = ?
-        WHERE student_id = ?
+            sex = ?
+        WHERE faculty_id = ?
     `;
 
-    if (invalidArray(studentList)) {
+    if (invalidArray(facultyList)) {
         return res.status(400).json(
             makeResponse({
                 result: [],
                 retCode: 'ERROR',
-                retMsg: 'No student IDs provided',
+                retMsg: 'No faculty IDs provided',
                 status: 400,
             })
         );
     }
 
     try {
-        const updatePromises = studentList.map(s => {
+        const updatePromises = facultyList.map(s => {
             const values = [
                 s.address,
                 s.age,
+                s.department,
                 s.email,
                 s.firstName,
                 s.lastName,
-                s.program,
                 s.sex,
-                s.yearLevel,
-                s.studentId,
+                s.facultyId,
             ];
             return pool.query(sql, values);
         });
 
         await Promise.all(updatePromises);
 
-        res.json(makeResponse({ result: studentList }));
+        res.json(makeResponse({ result: facultyList }));
     } catch (err) {
         res.status(500).json(
             makeResponse({
@@ -174,12 +172,12 @@ export async function updateStudents(req: Request, res: Response) {
     }
 }
 
-export async function deleteStudent(req: Request, res: Response) {
+export async function deleteFaculties(req: Request, res: Response) {
     const idList: string[] = req.body.data;
     const sql = `
-        UPDATE student
+        UPDATE faculty
         SET deleted_at = NOW()
-        WHERE student_id IN (?)
+        WHERE faculty_id IN (?)
     `;
 
     if (invalidArray(idList)) {
@@ -187,7 +185,7 @@ export async function deleteStudent(req: Request, res: Response) {
             makeResponse({
                 result: [],
                 retCode: 'ERROR',
-                retMsg: 'No student IDs provided',
+                retMsg: 'No faculty IDs provided',
                 status: 400,
             })
         );
@@ -202,7 +200,7 @@ export async function deleteStudent(req: Request, res: Response) {
             makeResponse({
                 result: [],
                 retCode: 'ERROR',
-                retMsg: 'Failed to delete students',
+                retMsg: String(err),
                 status: 500,
             })
         );

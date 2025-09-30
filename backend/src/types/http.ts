@@ -1,7 +1,7 @@
-export interface Answer<T = unknown> {
-    status: number;
-    result: T;
-    retMsg: string;
-    retCode: string;
+export interface MakeResponseProps<T = unknown> {
+    result?: T;
+    retCode?: string;
+    retMsg?: string;
+    status?: number;
     timeZone?: string;
 }

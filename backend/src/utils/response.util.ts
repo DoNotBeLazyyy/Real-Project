@@ -1,18 +1,19 @@
 // Response utils
-import { Answer } from '../types/http.js';
+import { MakeResponseProps } from '../types/http.js';
 
 // Format reponse
-export function makeResponse<T>(
-    status: number,
-    result: T,
-    retMsg: string,
-    retCode: 'SUCCESS' | 'ERROR'
-): Answer<T> {
-    return {
-        result,
-        retCode,
-        retMsg,
-        status,
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    };
+export function makeResponse<T>(props: MakeResponseProps<T>): MakeResponseProps<T> {
+    const {result, retCode, retMsg, status} = props;
+
+    if (retCode) {
+        return {
+            result,
+            retCode: retCode ?? '',
+            retMsg: retMsg ?? '',
+            status: status ?? 0,
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        };
+    }
+
+    return { result };
 }

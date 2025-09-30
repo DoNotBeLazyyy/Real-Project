@@ -1,9 +1,9 @@
 import express from 'express';
-import { addStudents, deleteStudent, getAllStudents, updateStudents } from '../services/student.service.js';
+import { addStudents, deleteStudent, getStudents, updateStudents } from '../services/student.service.js';
 
 const studentRouter = express.Router();
 
-studentRouter.get('/get', getAllStudents);
+studentRouter.get('/get', getStudents);
 studentRouter.post('/add', addStudents);
 studentRouter.put('/update', updateStudents);
 studentRouter.delete('/delete', deleteStudent);
