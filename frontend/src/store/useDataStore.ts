@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 interface DataStore<TData> {
+  allRows: TData[];
   modifiedRows: TData[];
   newRowData: TData[];
   rowData: TData[];
@@ -15,6 +16,7 @@ interface DataStore<TData> {
 
 export function createDataStore<TData>() {
     const useStore = create<DataStore<TData>>((set) => ({
+        allRows: [],
         modifiedRows: [],
         newRowData: [],
         rowData: [],

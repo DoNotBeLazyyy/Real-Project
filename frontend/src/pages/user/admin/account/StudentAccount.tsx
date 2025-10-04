@@ -3,6 +3,7 @@ import NewGridFormTable from '@components/GridTable/NewGridFormTable';
 import { postStudents, deleteStudents, putStudents, getAllStudents, getActiveStudents } from '@services/student.service';
 import { useActionStore } from '@store/useActionStore';
 import { StudentAccountColumnProps } from '@type/account.type';
+import { SelectProps } from '@type/common.type';
 import { GridColumnsProps } from '@type/grid.type';
 import { ManagementProps } from '@type/management.type';
 import { useEffect } from 'react';
@@ -15,11 +16,11 @@ export default function StudentAccount({
     const { isAddRemove, isDelete, isModify, setAction } = useActionStore();
     const { newRowData, selectedRowData, totalDataCount, setData, setTotalDataCount } = useDataStore();
     // Year level options
-    const yearLevelOptions = [
-        '1st Year',
-        '2nd Year',
-        '3rd Year',
-        '4th Year'
+    const yearLevelOptions: SelectProps[] = [
+        { label: 'First Year', value: 'First' },
+        { label: 'Second Year', value: 'Second' },
+        { label: 'Third Year', value: 'Third' },
+        { label: 'Fourth Year', value: 'Fourth' }
     ];
     // Student account fields
     const studentColumns: GridColumnsProps<StudentAccountColumnProps>[] = [
@@ -100,7 +101,7 @@ export default function StudentAccount({
             age: '',
             address: '',
             program: '',
-            yearLevel: yearLevelOptions[0]
+            yearLevel: yearLevelOptions[0].label
         };
         const newData = [...newRowData, newStudent];
         setData('newRowData', newData);

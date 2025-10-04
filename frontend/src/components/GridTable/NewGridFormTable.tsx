@@ -1,7 +1,7 @@
 import MinusIcon from '@components/icons/MinusIcon';
 import PlusIcon from '@components/icons/PlusIcon';
+import { UpdateCodeProps } from '@pages/user/admin/course/ScheduleManagement';
 import { useActionStore } from '@store/useActionStore';
-import { FacultyAccountColumnProps } from '@type/account.type';
 import { DataStoreHook, NullGridApi, UnknownObject } from '@type/common.type';
 import { GridColumnsProps } from '@type/grid.type';
 import { formatHeaderName } from '@type/string.util';
@@ -17,19 +17,23 @@ interface FormValues<TData> {
 
 interface NewGridFormTableProps<TData> extends Omit<NewGridTableProps<TData>, 'setGridApi' | 'gridApi'> {
     columns: GridColumnsProps<TData>[];
+    dependentField?: string;
     fieldId: string;
     submitRef?: RefObject<HTMLButtonElement | null>;
     onCreateNewRow: () => void;
+    onChange?: (updateProps: UpdateCodeProps<TData>) => void;
     onSubmit?: (modifiedData?: TData[]) => void;
     useDataStore: DataStoreHook<TData>;
 }
 
 export default function NewGridFormTable<TData>({
     columns,
+    dependentField,
     rowData: initialData,
     fieldId,
     submitRef,
     onCreateNewRow,
+    onChange,
     onSubmit,
     useDataStore,
     ...props
@@ -50,12 +54,15 @@ export default function NewGridFormTable<TData>({
 
         return {
             field,
+            flex: 1,
             headerName: formatHeaderName(field),
-            minWidth: 160,
-            maxWidth: 160,
+            minWidth: col.minWidth ?? 100,
             cellRenderer: (params: ICellRendererParams) => (
-                <NewGridCell<FacultyAccountColumnProps>
+                <NewGridCell<TData>
+                    dependentField={dependentField}
                     field={field}
+                    options={col.options}
+                    onChange={onChange}
                     inputType={col.inputType}
                     maxLength={col.maxLength}
                     params={params}
@@ -72,15 +79,17 @@ export default function NewGridFormTable<TData>({
         if (isModify) {
             finalColumns.push({
                 field: 'status',
+                floatingFilter: false,
                 headerName: 'Status',
-                minWidth: 120,
                 maxWidth: 120,
+                minWidth: 120,
                 sortable: false
             } as ColDef<TData>);
         }
 
         if (isAddRemove) {
             const addRemoveColumn = handleAddRemoveColumn() as ColDef<TData>;
+
             finalColumns.push(addRemoveColumn);
         }
 
@@ -112,9 +121,7 @@ export default function NewGridFormTable<TData>({
                 }
             });
 
-            if (newModifiedRows.length > 0) {
-                onSubmit?.(newModifiedRows);
-            }
+            onSubmit?.(newModifiedRows);
 
             return;
         }

@@ -25,3 +25,9 @@ export type ButtonNull = RefObject<HTMLButtonElement | null>;
 
 // Store props
 export type DataStoreHook<TData> = ReturnType<typeof createDataStore<TData>>;
+
+// Select props
+export interface SelectProps {
+    value: string;
+    label: string;
+}

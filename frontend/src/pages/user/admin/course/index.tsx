@@ -8,6 +8,9 @@ import { CourseManagementColumnProps, ScheduleManagementColumnProps, DepartmentM
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-quartz.css';
 import { useEffect, useRef, useState } from 'react';
+import CourseManagement from './CourseManagement';
+import DepartmentManagement from './DepartmentManagement';
+import ProgramManagement from './ProgramManagement';
 import ScheduleManagement from './ScheduleManagement';
 
 type ManagementRowProps =
@@ -42,9 +45,27 @@ export default function AdminCourse() {
         Program: useProgramDataStore
     };
     const managementComponentMap: JsxObject = {
+        Course: (
+            <CourseManagement
+                useDataStore={useCourseDataStore}
+                submitRef={submitRef}
+            />
+        ),
         Schedule: (
             <ScheduleManagement
                 useDataStore={useScheduleDataStore}
+                submitRef={submitRef}
+            />
+        ),
+        Department: (
+            <DepartmentManagement
+                useDataStore={useDepartmentDataStore}
+                submitRef={submitRef}
+            />
+        ),
+        Program: (
+            <ProgramManagement
+                useDataStore={useProgramDataStore}
                 submitRef={submitRef}
             />
         )

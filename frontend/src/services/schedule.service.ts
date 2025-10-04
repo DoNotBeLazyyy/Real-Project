@@ -2,6 +2,10 @@ import { CustomAxios } from '@services/index.service';
 import { Answer } from '@type/http';
 import { ScheduleManagementColumnProps } from '@type/management.type';
 
+export function getAllSchedules() {
+    return CustomAxios.get<Answer<ScheduleManagementColumnProps[]>>('/api/schedule/get');
+}
+
 export function getActiveSchedules() {
     return CustomAxios.get<Answer<ScheduleManagementColumnProps[]>>('/api/schedule/get', { params: { status: 'active' } });
 }

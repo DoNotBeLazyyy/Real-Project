@@ -7,31 +7,43 @@ export interface ManagementProps<TData> {
 
 export interface ProgramManagementColumnProps {
     programCode: string;
+    programId?: string;
     programName?: string;
     departmentId?: string;
+    deletedAt?: string | null;
 }
 
 export interface DepartmentManagementColumnProps {
     departmentCode: string;
+    departmentId?: string;
     departmentName?: string;
+    deletedAt?: string | null;
 }
 
 export interface ScheduleManagementColumnProps {
     courseId: string;
+    facultyId: string;
+    programId: string;
     scheduleCode: string;
-    scheduleDays?: ScheduleDays;
+    scheduleDays: ScheduleDaysProps;
     scheduleEndTime: string;
+    scheduleId?: string;
     scheduleStartTime: string;
+    semester: string;
+    yearLevel: string;
+    deletedAt?: string | null;
 }
 
 export interface CourseManagementColumnProps {
     courseCode: string;
+    courseDescription?: string;
+    courseId?: string;
     courseName?: string;
     courseUnit?: number;
-    courseDescription?: string;
+    deletedAt?: string | null;
 }
 
-export type ScheduleDays =
+export type ScheduleDaysProps =
     | 'M'
     | 'T'
     | 'W'
