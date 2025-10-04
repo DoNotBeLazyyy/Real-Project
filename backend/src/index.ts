@@ -2,7 +2,11 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
+import courseRouter from './routes/course.route.js';
+import departmentRouter from './routes/department.route.js';
 import facultyRouter from './routes/faculty.route.js';
+import programRouter from './routes/program.route.js';
+import scheduleRouter from './routes/schedule.route.js';
 import studentRouter from './routes/student.route.js';
 
 dotenv.config();
@@ -22,6 +26,10 @@ app.use(bodyParser.json());
 // Routes
 app.use('/api/student', studentRouter)
 app.use('/api/faculty', facultyRouter)
+app.use('/api/schedule', scheduleRouter)
+app.use('/api/course', courseRouter)
+app.use('/api/department', departmentRouter)
+app.use('/api/program', programRouter)
 
 // Start server
 app.listen(port, () => {
