@@ -87,25 +87,9 @@ export async function addSchedules(req: Request, res: Response) {
 
     try {
         const addOrRestorePromises = scheduleList.map(async (s) => {
-            // Check if schedule already exists in DB (even soft-deleted)
-            const [rows]: any = await pool.query(
-                `SELECT deleted_at FROM schedule WHERE schedule_code = ? LIMIT 1`,
-                [s.scheduleCode]
-            );
-
-            if (rows.length > 0) {
-                const existing = rows[0];
-
-                // If soft-deleted, restore it
-                if (existing.deleted_at !== null) {
-                    console.log('Restoring schedule:', s.scheduleCode);
-                    await pool.query(restoreSql, [s.scheduleCode]);
-                } else {
-                    console.log('Already active, skipping:', s.scheduleCode);
-                }
+            if (s.deletedAt !== null && s.scheduleId) {
+                await pool.query(restoreSql, [s.scheduleCode]);
             } else {
-                // Insert new record
-                console.log('Adding new schedule:', s.scheduleCode);
                 const addVals = [
                     s.courseId,
                     s.facultyId,
@@ -160,6 +144,12 @@ export async function updateSchedules(req: Request, res: Response) {
             year_level = ?
         WHERE schedule_id = ?
     `;
+    const emptySql = `
+        UPDATE schedule
+        SET schedule_code = ?
+        WHERE schedule_code = ? AND schedule_id <> ?
+        LIMIT 1
+    `
     const deleteSql = `
         UPDATE schedule
         SET deleted_at = NOW()
@@ -170,6 +160,7 @@ export async function updateSchedules(req: Request, res: Response) {
         SET deleted_at = NULL
         WHERE schedule_code = ?
     `;
+    let connection;
 
     if (invalidArray(scheduleList)) {
         return res.status(400).json(
@@ -183,14 +174,28 @@ export async function updateSchedules(req: Request, res: Response) {
     }
 
     try {
-        const updatePromises = scheduleList.map(async (s) => {
-            if (s.deletedAt === null) {
-                const restoreVals = [s.scheduleCode];
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+
+        for (const [idx, s] of scheduleList.entries()) {
+            const [rows]: any = await connection.query(
+                `SELECT schedule_code, deleted_at FROM schedule WHERE schedule_code = ? AND schedule_id <> ? LIMIT 1`,
+                [s.scheduleCode, s.scheduleId]
+            );
+            const inactiveRow = rows[0];
+
+            if (rows.length > 0 && inactiveRow.deleted_at !== null) {
+                const restoreVals = [inactiveRow.schedule_code];
                 const deleteVals = [s.scheduleId];
 
-                await pool.query(deleteSql, deleteVals);
-                await pool.query(restoreSql, restoreVals);
+                await connection.query(deleteSql, deleteVals);
+                await connection.query(restoreSql, restoreVals);
             } else {
+                const emptyVals = [
+                    idx,
+                    s.scheduleCode,
+                    s.scheduleId
+                ]
                 const updateVals = [
                     s.courseId,
                     s.facultyId,
@@ -203,14 +208,26 @@ export async function updateSchedules(req: Request, res: Response) {
                     s.yearLevel,
                     s.scheduleId,
                 ];
-                await pool.query(updateSql, updateVals);
+                await connection.query(emptySql, emptyVals);
+                await connection.query(updateSql, updateVals);
             }
-        });
+        }
 
-    await Promise.all(updatePromises);
+        await connection.commit();
 
-    res.json(makeResponse({ result: scheduleList }));
+        res.json(
+            makeResponse({
+                result: scheduleList,
+                retCode: 'SUCCESS',
+                retMsg: 'Schedules added/restored successfully',
+                status: 200,
+            })
+        );
     } catch (err) {
+        if (connection) {
+            await connection.rollback()
+        }
+
         res.status(500).json(
             makeResponse({
                 result: [],
@@ -219,6 +236,10 @@ export async function updateSchedules(req: Request, res: Response) {
                 status: 500,
             })
         );
+    } finally {
+        if (connection) {
+            connection.release();
+        }
     }
 }
 
