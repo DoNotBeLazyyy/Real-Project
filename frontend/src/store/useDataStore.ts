@@ -12,6 +12,7 @@ interface DataStore<TData> {
     value: DataStore<TData>[K] | ((prev: DataStore<TData>[K]) => DataStore<TData>[K])
   ) => void;
   setTotalDataCount: (value: number) => void;
+  reset: () => void;
 }
 
 export function createDataStore<TData>() {
@@ -32,7 +33,13 @@ export function createDataStore<TData>() {
                   ? (value as (prevValue: DataStore<TData>[K]) => DataStore<TData>[K])(prev[key])
                   : value
         })),
-        setTotalDataCount: (value) => set({ totalDataCount: value })
+        setTotalDataCount: (value) => set({ totalDataCount: value }),
+        reset: () =>
+            set({
+                modifiedRows: [],
+                newRowData: [],
+                selectedRowData: []
+            })
     }));
 
     return function useDataStore() {

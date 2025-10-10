@@ -1,6 +1,11 @@
 import { CustomAxios } from '@services/index.service';
+import { FacultyDetailProps } from '@store/useUserStore';
 import { FacultyAccountColumnProps } from '@type/account.type';
 import { Answer } from '@type/http';
+
+export function getFacultyDetail(username: string) {
+    return CustomAxios.get<Answer<FacultyDetailProps>>('/api/faculty/get-detail', { params: { username } });
+}
 
 export function getAllFaculties() {
     return CustomAxios.get<Answer<FacultyAccountColumnProps[]>>('/api/faculty/get');

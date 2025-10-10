@@ -1,9 +1,9 @@
-import ValidCommonInput from '@components/input/ValidCommonInput';
+import CommonInput from '@components/input/CommonInput';
 import { InputType } from '@type/grid.type';
 import { IFloatingFilterParams } from 'ag-grid-community';
 
 interface NewGridTableFilterProps extends IFloatingFilterParams {
-  inputType?: InputType;
+    inputType: InputType;
 }
 
 export default function NewGridTableFilter(props: NewGridTableFilterProps) {
@@ -19,7 +19,7 @@ export default function NewGridTableFilter(props: NewGridTableFilterProps) {
     }
 
     return (
-        <ValidCommonInput
+        <CommonInput
             className="mx-[10px] px-[10px] w-full"
             inputType={inputType}
             placeholder={`Search ${headerName}`}

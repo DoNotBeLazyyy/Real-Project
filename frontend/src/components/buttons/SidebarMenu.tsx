@@ -1,3 +1,4 @@
+import { useUserStore } from '@store/useUserStore';
 import { classMerge } from '@utils/css.util';
 import { usePath } from '@utils/path.util';
 import { useEffect, useState } from 'react';
@@ -31,6 +32,7 @@ export default function SidebarMenu({
     // Hooks
     const navigate = useNavigate();
     const { pathname, secondaryPath } = usePath();
+    const { detail } = useUserStore();
     // State variables
     const [activeTab, setActiveTab] = useState('');
     // Custom variables
@@ -38,19 +40,19 @@ export default function SidebarMenu({
         student: [
             { label: 'Dashboard', path: 'dashboard' },
             { label: 'Course', path: 'course' },
-            { label: 'Chats', path: 'chats' },
+            { label: 'Chats', path: 'chat' },
             { label: 'Profile', path: 'profile' }
         ],
         faculty: [
             { label: 'Dashboard', path: 'dashboard' },
             { label: 'Course', path: 'course' },
-            { label: 'Chats', path: 'chats' },
-            { label: 'Settings', path: 'settings' }
+            { label: 'Chats', path: 'chat' },
+            { label: 'Profile', path: 'profile' }
         ],
         admin: [
             { label: 'Dashboard', path: 'dashboard' },
             { label: 'Course', path: 'course' },
-            { label: 'Support', path: 'chats' },
+            { label: 'Support', path: 'support' },
             { label: 'Account', path: 'account' }
         ]
     };
@@ -59,6 +61,7 @@ export default function SidebarMenu({
 
     useEffect(() => {
         setActiveTab(secondaryPath);
+        console.log('detail: ', detail);
     }, [pathname]);
 
     /**
@@ -70,7 +73,7 @@ export default function SidebarMenu({
         if (tab) {
             const tabPath = tab.path;
             setActiveTab(tabPath);
-            navigate(`/${userLevel}/${tabPath}`);
+            navigate(`${tabPath}`);
         }
     }
 

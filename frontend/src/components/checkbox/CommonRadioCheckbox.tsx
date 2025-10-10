@@ -18,7 +18,6 @@ export default function CommonRadioCheckbox({
 }: CommonRadioCheckboxProps) {
     const [internalChecked, setInternalChecked] = useState(checked ?? false);
 
-    // Sync external checked prop if controlled
     useEffect(() => {
         if (checked !== undefined) {
             setInternalChecked(checked);
@@ -29,8 +28,7 @@ export default function CommonRadioCheckbox({
         if (disabled || internalChecked) {
             return;
         };
-
-        setInternalChecked(true);
+        setInternalChecked(Boolean(checked));
         onChange?.(label);
     }
 

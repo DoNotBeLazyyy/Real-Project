@@ -5,6 +5,7 @@ import ShadowCard from '@components/card/ShadowCard';
 import CommonDatepicker from '@components/datepicker/CommonDatepicker';
 import CommonMediaWithContent from '@components/label/CommonMediaWithContent';
 import IconSelect from '@components/select/IconSelect';
+import { useUserStore } from '@store/useUserStore';
 import { useEffect, useRef, useState } from 'react';
 
 interface TaskListProps {
@@ -15,6 +16,8 @@ interface TaskListProps {
 }
 
 export default function SubSidebar() {
+    // Store
+    const { detail } = useUserStore();
     // Ref variables
     const listRef = useRef<HTMLDivElement>(null);
     // State variables
@@ -82,7 +85,7 @@ export default function SubSidebar() {
                         imageUrl={logo}
                         isCentered
                         isVertical
-                        mediaLabel="Julius Robert T. Tolentino"
+                        mediaLabel={`${detail?.firstName} ${detail?.lastName}`}
                     />
                     <ShadowCard white>
                         <CommonDatepicker />

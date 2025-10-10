@@ -2,6 +2,10 @@ import { CustomAxios } from '@services/index.service';
 import { Answer } from '@type/http';
 import { CourseManagementColumnProps } from '@type/management.type';
 
+export function getAllCourses() {
+    return CustomAxios.get<Answer<CourseManagementColumnProps[]>>('/api/course/get');
+}
+
 export function getActiveCourses() {
     return CustomAxios.get<Answer<CourseManagementColumnProps[]>>('/api/course/get', { params: { status: 'active' } });
 }

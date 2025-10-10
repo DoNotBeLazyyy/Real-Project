@@ -31,21 +31,6 @@ export default function ValidCommonSelect({
             menuPortalTarget={document.body}
             menuPosition="fixed"
             styles={{
-
-                control: (base) => ({
-                    ...base,
-                    minHeight: '28px',
-                    height: '28px'
-                }),
-                valueContainer: (base) => ({
-                    ...base,
-                    height: '28px',
-                    padding: '0 6px'
-                }),
-                indicatorsContainer: (base) => ({
-                    ...base,
-                    height: '28px'
-                }),
                 menuPortal: (base) => ({
                     ...base,
                     zIndex: 9999

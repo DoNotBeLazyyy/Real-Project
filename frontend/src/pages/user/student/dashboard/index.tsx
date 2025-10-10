@@ -17,17 +17,17 @@ export default function StudentDashboard() {
 
     return (
         <MainDiv>
-            <CommonHeader 
+            <CommonHeader
                 title="Dashboard"
                 subTitle="News/Announcement Page"
                 icons={iconMap}
-            /> 
-            <ShadowCard 
+            />
+            <ShadowCard
                 isCentered
                 isLarge
             >
                 <div className="px-[20px]">
-                    <img 
+                    <img
                         src={newsImage}
                     />
                 </div>

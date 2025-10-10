@@ -4,10 +4,8 @@ import { RouteObject } from 'react-router-dom';
 export default function adminCourseRoute(): RouteObject[] {
     return [
         {
-            path: 'course/',
-            element: <AdminCourse />,
-            children: [
-            ]
+            path: 'course',
+            element: <AdminCourse />
         }
     ];
 }

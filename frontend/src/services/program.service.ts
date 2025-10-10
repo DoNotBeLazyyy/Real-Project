@@ -2,6 +2,10 @@ import { CustomAxios } from '@services/index.service';
 import { Answer } from '@type/http';
 import { ProgramManagementColumnProps } from '@type/management.type';
 
+export function getAllPrograms() {
+    return CustomAxios.get<Answer<ProgramManagementColumnProps[]>>('/api/program/get');
+}
+
 export function getActivePrograms() {
     return CustomAxios.get<Answer<ProgramManagementColumnProps[]>>('/api/program/get', { params: { status: 'active' } });
 }

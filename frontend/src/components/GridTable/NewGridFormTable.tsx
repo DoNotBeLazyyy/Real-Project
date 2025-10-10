@@ -2,12 +2,12 @@ import MinusIcon from '@components/icons/MinusIcon';
 import PlusIcon from '@components/icons/PlusIcon';
 import { UpdateCodeProps } from '@pages/user/admin/course/ScheduleManagement';
 import { useActionStore } from '@store/useActionStore';
-import { DataStoreHook, NullGridApi, UnknownObject } from '@type/common.type';
+import { DataStoreHook, NullGridApi, NumberNull, UnknownObject } from '@type/common.type';
 import { GridColumnsProps } from '@type/grid.type';
 import { formatHeaderName } from '@type/string.util';
 import { ColDef, ColDefField, ICellRendererParams, SelectionChangedEvent } from 'ag-grid-community';
 import { RefObject, useEffect, useMemo, useState } from 'react';
-import { useForm, FormProvider, FieldErrors } from 'react-hook-form';
+import { useForm, FormProvider, FieldErrors, FieldValues } from 'react-hook-form';
 import NewGridCell from './NewGridCell';
 import NewGridTable, { NewGridTableProps } from './NewGridTable';
 
@@ -47,25 +47,29 @@ export default function NewGridFormTable<TData>({
     });
     // Grid api
     const [gridApi, setGridApi] = useState<NullGridApi>(null);
-    // Generated column definitions
     // Columns based on the data fields
     const dataColumns: ColDef<TData>[] = columns.map((col) => {
-        const field = col.field; // keyof TData
+        const field = col.field;
 
         return {
             field,
             flex: 1,
-            headerName: formatHeaderName(field),
+            headerName: col.name ?? formatHeaderName(field),
             minWidth: col.minWidth ?? 100,
+            suppressKeyboardEvent: (params) => {
+                const key = params.event.key;
+                return key === 'Tab';
+            },
             cellRenderer: (params: ICellRendererParams) => (
-                <NewGridCell<TData>
+                <NewGridCell
                     dependentField={dependentField}
                     field={field}
-                    options={col.options}
-                    onChange={onChange}
                     inputType={col.inputType}
-                    maxLength={col.maxLength}
+                    options={col.options}
                     params={params}
+                    maxLength={col.maxLength}
+                    minLength={col.minLength}
+                    onChange={onChange}
                 />
             )
         } as ColDef<TData>;
@@ -93,6 +97,17 @@ export default function NewGridFormTable<TData>({
             finalColumns.push(addRemoveColumn);
         }
 
+        finalColumns.push({
+            filter: false,
+            headerName: 'NO.',
+            maxWidth: 80,
+            minWidth: 50,
+            sortable: false,
+            cellRenderer: (params: ICellRendererParams) => (
+                (params.node?.rowIndex ?? 0) + 1
+            )
+        } as ColDef<TData>);
+
         finalColumns.push(...dataColumns);
 
         return finalColumns;
@@ -109,6 +124,32 @@ export default function NewGridFormTable<TData>({
     }, [rowData]);
 
     function handleFormSubmit() {
+        const rowData: TData[] = [];
+        const errors: string[] = [];
+        const requiredFields: string[] = columns.map((col) => col.field);
+
+        gridApi?.forEachNode((node) => rowData.push(node.data));
+
+        rowData.forEach((row, rowIndex) => {
+            const missingFields = requiredFields.filter(
+                (field) => {
+                    const newField = field as keyof TData;
+
+                    return !row[newField] || row[newField].toString()
+                        .trim() === '';
+                }
+            );
+
+            if (missingFields.length > 0) {
+                errors.push(`Row ${rowIndex + 1}: Missing ${missingFields.join(', ')}`);
+            }
+        });
+
+        if (errors.length) {
+            alert(errors.join('\n'));
+            return;
+        }
+
         if (isModify) {
             const newModifiedRows: TData[] = [];
 
@@ -121,20 +162,33 @@ export default function NewGridFormTable<TData>({
                 }
             });
 
+            if (newModifiedRows.length < 1) {
+                alert('No changes were made.');
+
+                return;
+            }
+
             onSubmit?.(newModifiedRows);
 
             return;
-        }
-
-        if (newRowData.length < 1 && selectedRowData.length < 1) {
-            return;
+        } else if (newRowData.length < 1 && isAddRemove) {
+            alert('No new entry were made.');
+        } else if (selectedRowData.length < 1 && isDelete) {
+            alert('No entry were selected.');
         }
 
         onSubmit?.();
     }
 
-    function handleFormError(errors: FieldErrors<FormValues<TData>>) {
-        console.log('Form errors:', errors);
+    function handleFormError<TData extends FieldValues>(errors: FieldErrors<TData>): void {
+        const messages: string = Object.values(errors)
+            .map((err) => err?.message as string | undefined)
+            .filter((msg): msg is string => Boolean(msg))
+            .join('\n');
+
+        if (messages) {
+            window.alert(messages);
+        }
     }
 
     function handleAddRemoveColumn(): ColDef<TData> {
@@ -155,7 +209,7 @@ export default function NewGridFormTable<TData>({
                     <MinusIcon
                         className="bg-[#FFFFFF] border-[#0C60A1] border-[2px] cursor-pointer p-[2px] rounded-full text-[#0C60A1]"
                         strokeWidth={3}
-                        onClick={() => {}}
+                        onClick={() => handleDeleteNewEntry(rowIndex)}
                     />
                 );
             },
@@ -169,6 +223,10 @@ export default function NewGridFormTable<TData>({
                 );
             }
         };
+    }
+
+    function handleDeleteNewEntry(rowIndex: NumberNull) {
+        setData('newRowData', (prevRows) => prevRows.filter((_, index) => index !== rowIndex));
     }
 
     function handleSelectedRows(event: SelectionChangedEvent) {

@@ -9,7 +9,7 @@ export interface ProgramManagementColumnProps {
     programCode: string;
     programId?: string;
     programName?: string;
-    departmentId?: string;
+    departmentId: string;
     deletedAt?: string | null;
 }
 
@@ -21,6 +21,7 @@ export interface DepartmentManagementColumnProps {
 }
 
 export interface ScheduleManagementColumnProps {
+    academicYear: string;
     courseId: string;
     facultyId: string;
     programId: string;
@@ -40,6 +41,7 @@ export interface CourseManagementColumnProps {
     courseId?: string;
     courseName?: string;
     courseUnit?: number;
+    courseMode?: string;
     deletedAt?: string | null;
 }
 

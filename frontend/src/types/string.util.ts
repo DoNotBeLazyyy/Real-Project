@@ -22,3 +22,10 @@ export function toMinutes(time: string): number {
     const minutes = parseInt(time.substring(2), 10);
     return hours * 60 + minutes;
 }
+
+export function formatColumnLabel(field: string): string {
+    return field
+        .replace(/([A-Z])/g, ' $1')
+        .replace(/^./, (str) => str.toUpperCase())
+        .trim();
+}

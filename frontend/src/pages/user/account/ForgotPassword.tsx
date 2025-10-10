@@ -1,13 +1,13 @@
 import AuthenticationButton from '@components/buttons/AuthenticationButton';
 import Input from '@components/input/Input';
 
-export default function StudentForgotPassword() {
+export default function ForgotPassword() {
 
     return (
         <>
             <div className="flex flex-col items-center">
                 <div className="pb-[20px] w-full">
-                    <Input 
+                    <Input
                         placeholder="Enter Username or Email"
                         type="text"
                     />
@@ -16,6 +16,6 @@ export default function StudentForgotPassword() {
                     <AuthenticationButton label="Search"/>
                 </div>
             </div>
-        </>        
+        </>
     );
 }

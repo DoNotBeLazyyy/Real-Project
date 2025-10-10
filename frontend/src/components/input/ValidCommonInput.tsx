@@ -1,61 +1,34 @@
-import { InputType } from '@type/grid.type';
-import { classMerge } from '@utils/css.util';
-import React, { InputHTMLAttributes, Ref, useState } from 'react';
+import { Controller, UseControllerProps } from 'react-hook-form';
+import CommonInput, { CommonInputProps } from './CommonInput';
 
-export interface ValidCommonInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
-    inputType?: InputType | '';
-    ref?: Ref<HTMLInputElement> | null;
-    onChange?: VoidFunction | ((data: string) => void);
-}
+export interface ValidCommonInputProps extends CommonInputProps, UseControllerProps {
+    isShowError?: boolean;
+};
 
 /**
  * ValidCommonInput
- * A reusable input for table cells with consistent styling.
+ * A reusable input for table cells with consistent styling and validation.
  */
 export default function ValidCommonInput({
-    className = '',
-    inputType,
-    ref,
-    onChange,
+    isShowError,
     ...props
 }: ValidCommonInputProps) {
-    // State variables
-    const [inputValue, setInputValue] = useState('');
-    // Pattern variables
-    const patterns: Record<InputType, RegExp> = {
-        alphabet: /[^a-zA-Z\s]/g,
-        number: /[^0-9]/g,
-        alphanumeric: /[^a-zA-Z0-9]/g,
-        email: /[^a-zA-Z0-9@._-]/g,
-        any: /(?!)/
-    };
-
-    function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
-        let val = e.target.value;
-
-        if (inputType) {
-            val = val.replace(patterns[inputType], '')
-                .replace(/^\s/g, '')
-                .replace(/\s+/g, ' ');
-        }
-
-        onChange?.(val);
-        setInputValue(val);
-    };
-
     return (
-        <input
-            className={
-                classMerge(
-                    'border border-gray-300 rounded py-[4px] px-[4px] overflow-hidden text-[14px] leading-[100%] outline-none',
-                    className
-                )
-            }
-            ref={ref}
-            type="text"
-            value={inputValue}
-            onChange={handleInputChange}
+        <Controller
             {...props}
+            render={({ field, fieldState }) => (
+                <div className="flex flex-col">
+                    <CommonInput
+                        {...field}
+                        {...props}
+                    />
+                    {isShowError && fieldState.error && (
+                        <span className="leading-[100%] mt-[4px] text-[#ef4444] text-[14px]">
+                            {fieldState.error.message}
+                        </span>
+                    )}
+                </div>
+            )}
         />
     );
-};
+}

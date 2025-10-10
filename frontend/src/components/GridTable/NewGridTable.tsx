@@ -48,9 +48,7 @@ export default function NewGridTable<T>({
         flex: 1,
         floatingFilter: hasFloatingFilter,
         floatingFilterComponent: NewGridTableFilter,
-        floatingFilterComponentParams: {
-            suppressFilterButton: true
-        },
+        suppressFloatingFilterButton: true,
         headerClass: 'ag-grade-header',
         resizable: false,
         sortable: true,

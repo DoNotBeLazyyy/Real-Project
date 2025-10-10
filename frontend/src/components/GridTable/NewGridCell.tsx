@@ -1,4 +1,4 @@
-import ValidCommonInput, { ValidCommonInputProps } from '@components/input/ValidCommonInput';
+import CommonInput, { CommonInputProps } from '@components/input/CommonInput';
 import ValidCommonSelect from '@components/select/ValidCommonSelect';
 import { UpdateCodeProps } from '@pages/user/admin/course/ScheduleManagement';
 import { useActionStore } from '@store/useActionStore';
@@ -7,7 +7,7 @@ import { InputType } from '@type/grid.type';
 import { ICellRendererParams } from 'ag-grid-community';
 import { useState } from 'react';
 
-interface NewGridCellProps<TData> extends Omit<ValidCommonInputProps, 'onChange'> {
+interface NewGridCellProps<TData> extends Omit<CommonInputProps, 'onChange' | 'value'> {
     dependentField?: string;
     field: string;
     inputType?: InputType;
@@ -25,26 +25,32 @@ export default function NewGridCell<TData>({
     onChange,
     ...props
 }: NewGridCellProps<TData>) {
-    const [originalValue] = useState(params?.api.getCellValue({ rowNode: params.node, colKey: field }) ?? '');
+    const [originalRow] = useState<Record<string, TData>>({ ...params?.node.data });
     const { isAddRemove, isModify } = useActionStore();
-    const data = params?.data as TData;
+    const data = params?.node.data as TData;
     const rowData = data as UnknownObject;
-    const prevVal = params?.api.getCellValue({ rowNode: params.node, colKey: field });
 
     function handleChange(newVal: string) {
+        rowData[field] = newVal;
+
         if (dependentField && onChange) {
-            rowData[field] = newVal;
-            onChange?.({ data, rowData, field, newVal, prevVal });
-        } else {
-            rowData[field] = newVal;
+            onChange?.({ data, rowData, field, newVal, prevVal: originalRow[field] as string });
         }
 
         if (!data) return;
 
-        if (isModify && originalValue !== rowData[field]) {
-            params?.node.setData({ ...data, status: 'modified' });
-        } else if (isModify && originalValue === newVal) {
-            params?.node.setData({ ...data, status: '' });
+        if (isModify) {
+            const isModified = Object.keys(originalRow)
+                .some(
+                    (key) => {
+                        return originalRow[key] !== rowData[key];
+                    }
+                );
+
+            params?.node.setData({
+                ...data,
+                status: isModified ? 'modified' : ''
+            });
         } else {
             params?.node.setData(data);
         }
@@ -55,7 +61,7 @@ export default function NewGridCell<TData>({
     };
 
     if (!isAddRemove && !isModify) {
-        return options?.find((o) => o.value === rowData[field])?.label ?? rowData[field] as string;
+        return options?.find(() => rowData[field])?.label ?? rowData[field] as string;
     };
 
     if (options) {
@@ -70,7 +76,7 @@ export default function NewGridCell<TData>({
 
     if (inputType) {
         return (
-            <ValidCommonInput
+            <CommonInput
                 className="w-full"
                 inputType={inputType}
                 value={rowData[field] as string}
@@ -80,5 +86,5 @@ export default function NewGridCell<TData>({
         );
     }
 
-    return rowData[field] as string ?? '';
+    return rowData[field] as string;
 }

@@ -1,4 +1,5 @@
-import axios, { AxiosRequestConfig } from 'axios';
+import { useUserStore } from '@store/useUserStore';
+import axios, { AxiosRequestConfig, AxiosRequestHeaders } from 'axios';
 
 export const serializeSortParams = (params: AxiosRequestConfig['params']): string => {
     const searchParams = new URLSearchParams();
@@ -19,6 +20,37 @@ export const CustomAxios = {
     axiosInstance: axios.create({
         baseURL: import.meta.env.BASE_URL
     }),
+    setupInterceptors() {
+        this.axiosInstance.interceptors.request.use(
+            (config) => {
+                const token = useUserStore.getState().token;
+
+                config.headers = {
+                    ...(config.headers as Record<string, string>)
+                } as AxiosRequestHeaders;
+
+                if (token) {
+                    (config.headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
+                }
+
+                return config;
+            },
+            (error) => Promise.reject(error)
+        );
+
+        this.axiosInstance.interceptors.response.use(
+            (response) => response,
+            (error) => {
+                const status = error.response?.status;
+                if (status === 401 || status === 403) {
+                    useUserStore.getState()
+                        .clearSession();
+                    window.location.href = '/account/login';
+                }
+                return Promise.reject(error);
+            }
+        );
+    },
     get<T>(url: string, config?: AxiosRequestConfig) {
         return this.axiosInstance.get<T>(url, config);
     },
@@ -45,3 +77,5 @@ export const CustomAxios = {
         return this.axiosInstance.putForm<T>(url, data, config);
     }
 };
+
+CustomAxios.setupInterceptors();

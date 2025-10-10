@@ -1,6 +1,7 @@
 interface AuthenticationButtonProps {
-    // Label of the button
+    disabled?: boolean;
     label: string;
+    onButtonClick?: VoidFunction;
 }
 
 /**
@@ -12,14 +13,19 @@ interface AuthenticationButtonProps {
  *      <AuthenticationButton label="Login" />
  *   );
  * }
- * 
+ *
  */
 export default function AuthenticationButton({
-    label
+    disabled,
+    label,
+    onButtonClick
 }: AuthenticationButtonProps) {
-
     return (
-        <button className="bg-[#000000] hover:opacity-[0.8] min-w-[312px] p-[12px] rounded-[8px] text-[#FFFFFF]">
+        <button
+            disabled={disabled}
+            className="bg-[#000000] min-w-[312px] p-[12px] rounded-[8px] text-[#FFFFFF]"
+            onClick={onButtonClick}
+        >
             {label}
         </button>
     );

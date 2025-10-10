@@ -5,11 +5,20 @@ interface ModalState {
   isDelete: boolean;
   isAddRemove: boolean;
   setAction: <K extends keyof Omit<ModalState, 'setAction'>>(key: K, value: ModalState[K]) => void;
+  setReset: () => void;
 }
 
 export const useActionStore = create<ModalState>((set) => ({
     isModify: false,
     isDelete: false,
     isAddRemove: false,
-    setAction: (key, value) => set({ [key]: value } as unknown as ModalState)
+
+    setAction: (key, value) => set({ [key]: value } as unknown as ModalState),
+
+    setReset: () =>
+        set({
+            isModify: false,
+            isDelete: false,
+            isAddRemove: false
+        })
 }));

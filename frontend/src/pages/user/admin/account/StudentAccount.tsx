@@ -1,4 +1,5 @@
 import NewGridFormTable from '@components/GridTable/NewGridFormTable';
+import { getActivePrograms } from '@services/program.service';
 // eslint-disable-next-line object-curly-newline
 import { postStudents, deleteStudents, putStudents, getAllStudents, getActiveStudents } from '@services/student.service';
 import { useActionStore } from '@store/useActionStore';
@@ -6,7 +7,7 @@ import { StudentAccountColumnProps } from '@type/account.type';
 import { SelectProps } from '@type/common.type';
 import { GridColumnsProps } from '@type/grid.type';
 import { ManagementProps } from '@type/management.type';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function StudentAccount({
     submitRef,
@@ -15,6 +16,8 @@ export default function StudentAccount({
     // Stores
     const { isAddRemove, isDelete, isModify, setAction } = useActionStore();
     const { newRowData, selectedRowData, totalDataCount, setData, setTotalDataCount } = useDataStore();
+    // State variables
+    const [programList, setProgramList] = useState<SelectProps[]>([]);
     // Year level options
     const yearLevelOptions: SelectProps[] = [
         { label: 'First Year', value: 'First' },
@@ -22,22 +25,28 @@ export default function StudentAccount({
         { label: 'Third Year', value: 'Third' },
         { label: 'Fourth Year', value: 'Fourth' }
     ];
+    // Sex option list
+    const sexList = [
+        { value: 'Male', label: 'Male' },
+        { value: 'Female', label: 'Female' }
+    ];
     // Student account fields
     const studentColumns: GridColumnsProps<StudentAccountColumnProps>[] = [
-        { field: 'studentNumber', maxLength: 37 },
-        { field: 'address', inputType: 'alphanumeric', maxLength: 50 },
-        { field: 'age', inputType: 'number', maxLength: 3 },
-        { field: 'email', inputType: 'email', maxLength: 50 },
-        { field: 'firstName', inputType: 'alphabet', maxLength: 25 },
-        { field: 'lastName', inputType: 'alphabet', maxLength: 25 },
-        { field: 'program', inputType: 'alphabet', maxLength: 20 },
-        { field: 'sex', inputType: 'alphabet', maxLength: 6 },
-        { field: 'yearLevel', options: yearLevelOptions }
+        { field: 'studentNumber', maxLength: 30, minWidth: 250 },
+        { field: 'address', inputType: 'any', maxLength: 100, minWidth: 250 },
+        { field: 'age', inputType: 'number', maxLength: 2, minWidth: 100 },
+        { field: 'email', inputType: 'email', maxLength: 100, minWidth: 250 },
+        { field: 'firstName', inputType: 'alphabet', maxLength: 30, minWidth: 150 },
+        { field: 'lastName', inputType: 'alphabet', maxLength: 30, minWidth: 150 },
+        { field: 'program', options: programList, minWidth: 250 },
+        { field: 'sex', options: sexList, minWidth: 150 },
+        { field: 'yearLevel', options: yearLevelOptions, minWidth: 150 }
     ];
 
     useEffect(() => {
         renderStudents();
         getTotalStudentCount();
+        getProgramList();
     }, []);
 
     async function renderStudents() {
@@ -45,6 +54,19 @@ export default function StudentAccount({
             .data
             .result;
         setData('rowData', studentList);
+    }
+
+    async function getProgramList() {
+        const activeProgramList = (await getActivePrograms())?.data?.result;
+
+        if (!activeProgramList) return;
+
+        const selectOptions: SelectProps[] = activeProgramList.map((program) => ({
+            value: program.programId ?? '',
+            label: `${program.programCode} - ${program.programName}`
+        }));
+
+        setProgramList(selectOptions);
     }
 
     async function getTotalStudentCount() {
@@ -90,18 +112,24 @@ export default function StudentAccount({
     }
 
     function handleCreateNewStudent() {
+        if (!programList || programList.length === 0) {
+            alert('Please create a program first.');
+            setAction('isAddRemove', false);
+            return;
+        }
+
         const totalRows = totalDataCount + newRowData.length;
         const newStudent: StudentAccountColumnProps = {
             studentNumber: `S-25${String(totalRows + 1)
                 .padStart(3, '0')}`,
             firstName: '',
             lastName: '',
-            sex: '',
+            sex: sexList[0].value,
             email: '',
             age: '',
             address: '',
-            program: '',
-            yearLevel: yearLevelOptions[0].label
+            program: programList[0].value,
+            yearLevel: yearLevelOptions[0].value
         };
         const newData = [...newRowData, newStudent];
         setData('newRowData', newData);

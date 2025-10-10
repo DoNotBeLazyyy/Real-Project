@@ -5,13 +5,23 @@ import SidebarMenu, { SidebarMenuProps } from '@components/buttons/SidebarMenu';
 import BrandCard from '@components/card/BrandCard';
 import SearchContact from '@components/input/SearchContact';
 import CommonMediaWithContent from '@components/label/CommonMediaWithContent';
+import { useUserStore } from '@store/useUserStore';
+import { useNavigate } from 'react-router-dom';
 
-export default function MainSidebar(props: SidebarMenuProps) {    // Custom variables
+export default function MainSidebar(props: SidebarMenuProps) {
+    const { clearSession } = useUserStore();
+    const navigate = useNavigate();
+    // Icon button list
     const iconButtonsMap = [
         { icon: lockIcon, label: 'Data privacy' },
         { icon: supportIcon, label: 'Technical Support' },
-        { icon: logoutIcon, label: 'Logout' }
+        { icon: logoutIcon, label: 'Logout', onClick: handleLogout }
     ];
+
+    function handleLogout() {
+        clearSession();
+        navigate('/account/login', { replace: true });
+    }
 
     return (
         <div className="bg-[#0C60A1] bottom-[0px] fixed flex flex-col gap-[16px] left-0 overflow-y-auto px-[30px] py-[20px] text-[#FFFFFF] top-[0px] w-[250px]">
@@ -31,6 +41,7 @@ export default function MainSidebar(props: SidebarMenuProps) {    // Custom vari
                         <CommonMediaWithContent
                             imageUrl={button.icon}
                             mediaLabel={button.label}
+                            onMediaClick={button.onClick}
                         />
                     </div>
                 ))}

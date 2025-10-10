@@ -101,7 +101,8 @@ const eslintConfig = typescriptESLint.config(
                 {
                     allowConstantExport: true
                 }
-            ]
+            ],
+            'no-trailing-spaces': ['error']
         },
         settings: {
             react: {

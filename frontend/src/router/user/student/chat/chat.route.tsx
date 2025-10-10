@@ -4,7 +4,7 @@ import { RouteObject } from 'react-router-dom';
 export default function studentChatRoute(): RouteObject[] {
     return [
         {
-            path: 'chats',
+            path: 'chat',
             element: <StudentChat />
         }
     ];

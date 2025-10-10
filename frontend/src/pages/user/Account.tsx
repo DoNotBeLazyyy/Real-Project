@@ -5,7 +5,7 @@ import BrandCard from '@components/card/BrandCard';
 import CommonMediaWithContent from '@components/label/CommonMediaWithContent';
 import { Outlet } from 'react-router-dom';
 
-export default function StudentAccount() {
+export default function Account() {
     return (
         <>
             <div

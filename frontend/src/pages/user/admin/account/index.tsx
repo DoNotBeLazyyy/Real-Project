@@ -78,6 +78,7 @@ export default function AdminAccount() {
             <CommonHeader title="Account Management" />
             <GridActionbar<FacultyStudentProps>
                 radioOptions={roleOptions}
+                selected={selectedRole}
                 onSubmitClick={handleSubmitClick}
                 setSelected={setSelectedRole}
                 useDataStore={accountStoreMap[selectedRole]}

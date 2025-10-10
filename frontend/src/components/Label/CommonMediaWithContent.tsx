@@ -23,6 +23,8 @@ interface CommonMediaWithContentProps {
     isVertical?: boolean;
     // Media label
     mediaLabel?: string;
+    // Callback trigger when clicked.
+    onMediaClick?: VoidFunction;
 }
 
 /**
@@ -55,7 +57,8 @@ export default function CommonMediaWithContent({
     imageUrl,
     isOverflowHidden,
     isVertical,
-    mediaLabel
+    mediaLabel,
+    onMediaClick
 }: CommonMediaWithContentProps) {
     // Style variables
     const boxStypeMap = {
@@ -119,7 +122,10 @@ export default function CommonMediaWithContent({
             ) : (
                 <div style={boxStyle}></div>
             )}
-            <div className="flex flex-col gap-[8px]">
+            <div
+                className="flex flex-col gap-[8px]"
+                onClick={onMediaClick}
+            >
                 {children}
                 {mediaLabel && (
                     <span

@@ -20,3 +20,9 @@ export interface FacultyAccountColumnProps extends AccountBaseProps {
     facultyId?: string;
     facultyNumber: string;
 }
+
+export interface AccountProps {
+    username: string;
+    password: string;
+    userRole: string;
+}

@@ -6,7 +6,7 @@ import { RouteObject } from 'react-router-dom';
 export default function studentCourseRoute(): RouteObject[] {
     return [
         {
-            path: 'course/',
+            path: 'course',
             element: <StudentCourse />,
             children: [
                 {

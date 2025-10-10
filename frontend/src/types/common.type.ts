@@ -1,6 +1,10 @@
 import { createDataStore } from '@store/useDataStore';
 import { GridApi } from 'ag-grid-community';
-import { JSX, RefObject } from 'react';
+import { JSX, Ref } from 'react';
+
+// Ref props
+export type InputRef = Ref<HTMLInputElement> | null;
+export type ButtonNull = React.RefObject<HTMLButtonElement | null>;
 
 // Icon svg props
 export type IconSvgProps = React.SVGProps<SVGSVGElement>;
@@ -12,6 +16,9 @@ export type NullGridApi = GridApi | null;
 export type StringNum = string | number;
 export type StringUndefined = string | undefined;
 
+// Number props
+export type NumberNull = number | null;
+
 // State props
 export type StateProps<T> = React.Dispatch<React.SetStateAction<T>>;
 
@@ -19,9 +26,6 @@ export type StateProps<T> = React.Dispatch<React.SetStateAction<T>>;
 export type UnknownObject = Record<string, unknown>;
 export type GenericStoreObject<TData> = Record<string, DataStoreHook<TData>>;
 export type JsxObject = Record<string, JSX.Element>;
-
-// Ref props
-export type ButtonNull = RefObject<HTMLButtonElement | null>;
 
 // Store props
 export type DataStoreHook<TData> = ReturnType<typeof createDataStore<TData>>;

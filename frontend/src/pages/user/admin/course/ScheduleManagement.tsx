@@ -1,4 +1,7 @@
 import NewGridFormTable from '@components/GridTable/NewGridFormTable';
+import { getActiveCourses } from '@services/course.service';
+import { getActiveFaculties } from '@services/faculty.service';
+import { getActivePrograms } from '@services/program.service';
 // eslint-disable-next-line object-curly-newline
 import { deleteSchedules, getActiveSchedules, getAllSchedules, postSchedules, putSchedules } from '@services/schedule.service';
 import { useActionStore } from '@store/useActionStore';
@@ -6,7 +9,7 @@ import { SelectProps, UnknownObject } from '@type/common.type';
 import { GridColumnsProps } from '@type/grid.type';
 import { ManagementProps, ScheduleDaysProps, ScheduleManagementColumnProps } from '@type/management.type';
 import { handleFormatTime, toMinutes } from '@type/string.util';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface TimeOptionsProps {
     value: ScheduleDaysProps;
@@ -28,6 +31,10 @@ export default function ScheduleManagement({
     // Stores
     const { isAddRemove, isDelete, isModify, setAction } = useActionStore();
     const { allRows, newRowData, selectedRowData, setData } = useDataStore();
+    // State variables
+    const [courseList, setCourseList] = useState<SelectProps[]>([]);
+    const [facultyList, setFacultyList] = useState<SelectProps[]>([]);
+    const [programList, setProgramList] = useState<SelectProps[]>([]);
     // Days options
     const scheduleDayOptions: TimeOptionsProps[] = [
         { value: 'M', label: 'M' },
@@ -79,6 +86,14 @@ export default function ScheduleManagement({
         { value: '1900', label: '19:00' },
         { value: '1930', label: '19:30' }
     ];
+    // Academic year list
+    const academicYears = [
+        { label: '2023-2024', value: '20232024' },
+        { label: '2024-2025', value: '20242025' },
+        { label: '2025-2026', value: '20252026' },
+        { label: '2026-2027', value: '20262027' },
+        { label: '2027-2028', value: '20272028' }
+    ];
     // Year level list
     const yearLevelOptions: SelectProps[] = [
         { label: 'First Year', value: 'First' },
@@ -89,24 +104,70 @@ export default function ScheduleManagement({
     // Semester list
     const semesterOptions: SelectProps[] = [
         { label: 'First Semester', value: 'First' },
-        { label: 'Second Semester', value: 'Second' }
+        { label: 'Second Semester', value: 'Second' },
+        { label: 'Summer Semester', value: 'Summer' }
     ];
     // Schedule account fields
     const scheduleDefConfigs: GridColumnsProps<ScheduleManagementColumnProps>[] = [
         { field: 'scheduleCode', maxLength: 20, minWidth: 220 },
-        { field: 'scheduleDays', options: scheduleDayOptions, maxLength: 10, minWidth: 150 },
-        { field: 'scheduleStartTime', options: timeOptions, maxLength: 5 },
-        { field: 'scheduleEndTime', options: timeOptions, maxLength: 5 },
-        { field: 'yearLevel', options: yearLevelOptions, maxLength: 20, minWidth: 150 },
-        { field: 'semester', options: semesterOptions, maxLength: 20, minWidth: 170 },
-        { field: 'programId', inputType: 'alphanumeric', maxLength: 20 },
-        { field: 'facultyId', inputType: 'alphanumeric', maxLength: 20 },
-        { field: 'courseId', inputType: 'alphanumeric', maxLength: 20 }
+        { field: 'academicYear', options: academicYears, minWidth: 160 },
+        { field: 'scheduleDays', options: scheduleDayOptions, minWidth: 150 },
+        { field: 'scheduleStartTime', options: timeOptions, minWidth: 150 },
+        { field: 'scheduleEndTime', options: timeOptions, minWidth: 150 },
+        { field: 'yearLevel', options: yearLevelOptions, minWidth: 150 },
+        { field: 'semester', options: semesterOptions, minWidth: 170 },
+        { field: 'programId', name: 'Program', options: programList, minWidth: 200 },
+        { field: 'facultyId', name: 'Faculty', options: facultyList, minWidth: 200 },
+        { field: 'courseId', name: 'Course', options: courseList, minWidth: 250 }
     ];
 
     useEffect(() => {
         renderSchedule();
+        getFacultyList();
+        getProgramList();
+        getCourseList();
     }, []);
+
+    async function getFacultyList() {
+        const activeFacultyList = (await getActiveFaculties())?.data?.result;
+
+        if (!activeFacultyList) return;
+
+        const selectOptions: SelectProps[] = activeFacultyList.map((faculty) => ({
+            value: faculty.facultyId ?? '',
+            label: `${faculty.facultyNumber} - ${faculty.lastName}, ${faculty.firstName}`
+        }));
+
+        setFacultyList(selectOptions);
+    }
+
+    // Program list
+    async function getProgramList() {
+        const activeProgramList = (await getActivePrograms())?.data?.result;
+
+        if (!activeProgramList) return;
+
+        const selectOptions: SelectProps[] = activeProgramList.map((program) => ({
+            value: program.programId ?? '',
+            label: `${program.programCode} - ${program.programName}`
+        }));
+
+        setProgramList(selectOptions);
+    }
+
+    // Course list
+    async function getCourseList() {
+        const activeCourseList = (await getActiveCourses())?.data?.result;
+
+        if (!activeCourseList) return;
+
+        const selectOptions: SelectProps[] = activeCourseList.map((course) => ({
+            value: course.courseId ?? '',
+            label: `${course.courseCode} - ${course.courseName}`
+        }));
+
+        setCourseList(selectOptions);
+    }
 
     async function getAllRows() {
         const allRows = (await getAllSchedules()).data.result;
@@ -114,27 +175,33 @@ export default function ScheduleManagement({
     }
 
     async function renderSchedule() {
-        const facultyList = (await getActiveSchedules())
+        const scheduleList = (await getActiveSchedules())
             .data
             .result;
-        setData('rowData', facultyList);
+
+        if (!scheduleList) {
+            return;
+        }
+
+        setData('rowData', scheduleList);
         getAllRows();
     }
 
     async function handleAddSchedule() {
-        const filteredData = handleFilterDuplicates(newRowData, 'add');
+        const { filteredData, message } = handleFilterDuplicates(newRowData, 'add');
+
         if (filteredData.length < 1) {
             return;
         }
-        const savedMessage = (await postSchedules(filteredData)).statusText;
-        console.log('test again: ', savedMessage);
-        if (savedMessage === 'OK') {
+
+        const savedMessage = (await postSchedules(filteredData)).data.retCode;
+
+        if (savedMessage === 'SUCCESS') {
+            alert(message);
             setAction('isAddRemove', false);
             setData('newRowData', []);
             renderSchedule();
-            return;
         }
-        alert('Adding failed');
     }
 
     async function handleDeleteSchedule() {
@@ -149,181 +216,168 @@ export default function ScheduleManagement({
 
     async function handleUpdateSchedule(modifiedData?: ScheduleManagementColumnProps[]) {
         const data = modifiedData ?? [];
-        if (data.length > 0) {
-            const filteredData = handleFilterDuplicates(data, 'modify');
-            if (filteredData.length < 1) {
-                return;
-            }
-            const updateMessage = (await putSchedules(filteredData)).statusText;
 
-            if (updateMessage === 'OK') {
-                alert('Schedule updated successfully!');
-            }
-        } else {
-            alert('No modified data found!');
+        const { filteredData, message } = handleFilterDuplicates(data, 'modify');
+
+        if (filteredData.length < 1) {
+            return;
         }
-        setAction('isModify', false);
-        setData('modifiedRows', []);
-        renderSchedule();
+
+        const updateMessage = (await putSchedules(filteredData)).data.retCode;
+
+        if (updateMessage === 'SUCCESS') {
+            alert(message);
+            setAction('isModify', false);
+            setData('modifiedRows', []);
+            renderSchedule();
+        }
     }
 
     function handleCreateNewSchedule() {
-        const initialValue = `${scheduleDayOptions[0].value}${handleFormatTime(timeOptions[0].value)}${handleFormatTime(timeOptions[2].value)}${'1'}${'1'}${'1'}${'First'}`;
+        if (!courseList || courseList.length === 0) {
+            alert('Please create a course first.');
+            setAction('isAddRemove', false);
+            return;
+        } else if (!facultyList || facultyList.length === 0) {
+            alert('Please create a faculty first.');
+            setAction('isAddRemove', false);
+            return;
+        } else if (!programList || programList.length === 0) {
+            alert('Please create a program first.');
+            setAction('isAddRemove', false);
+            return;
+        }
+
+        const academicYear = getAcademicYear();
+        const initialValue = `${scheduleDayOptions[0].value}${handleFormatTime(timeOptions[0].value)}${handleFormatTime(timeOptions[2].value)}${programList[0].value}${facultyList[0].value}${courseList[0].value}${'First'}${academicYear}`;
         const newSchedule: ScheduleManagementColumnProps = {
-            courseId: '1',
-            facultyId: '1',
-            programId: '1',
+            courseId: courseList[0].value,
+            facultyId: facultyList[0].value,
+            programId: programList[0].value,
             scheduleCode: initialValue,
             scheduleDays: scheduleDayOptions[0].value,
             scheduleEndTime: timeOptions[2].value,
             scheduleStartTime: timeOptions[0].value,
             semester: 'First',
+            academicYear: academicYear,
             yearLevel: 'First'
         };
         const newData = [...newRowData, newSchedule];
         setData('newRowData', newData);
     }
 
+    function getAcademicYear(): string {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = today.getMonth() + 1;
+
+        const startYear = month >= 8 ? year : year - 1;
+        const endYear = startYear + 1;
+
+        return `${startYear}${endYear}`;
+    }
+
     function handleUpdateCode(updateProps: UpdateCodeProps<ScheduleManagementColumnProps>) {
         const { data, field, prevVal, rowData, newVal } = updateProps;
-        const { courseId, facultyId, programId, scheduleDays, scheduleEndTime, scheduleStartTime, semester } = data;
-        const scheduleCode = `${scheduleDays}${handleFormatTime(scheduleStartTime)}${handleFormatTime(scheduleEndTime)}${courseId}${programId}${facultyId}${semester}`;
 
-        if (!rowData) return;
+        if (!rowData || !field) {
+            return;
+        }
 
-        if (newVal) {
-            const startMinutes = toMinutes(scheduleStartTime);
-            const endMinutes = toMinutes(scheduleEndTime);
-            if (!field) return;
-            if (startMinutes >= endMinutes) {
-                rowData[field] = prevVal;
-            } else {
-                rowData['scheduleCode'] = scheduleCode;
-                rowData[field] = newVal;
-            }
+        const { courseId, facultyId, programId, scheduleDays, scheduleEndTime, scheduleStartTime, semester, academicYear } = data;
+        const scheduleCode = `${scheduleDays}${handleFormatTime(scheduleStartTime)}${handleFormatTime(scheduleEndTime)}${courseId}${programId}${facultyId}${semester}${academicYear}`;
+        const startMinutes = toMinutes(scheduleStartTime);
+        const endMinutes = toMinutes(scheduleEndTime);
+
+        if (startMinutes >= endMinutes) {
+            rowData[field] = prevVal;
+        } else {
+            rowData['scheduleCode'] = scheduleCode;
+            rowData[field] = newVal;
         }
     }
 
     function handleFilterDuplicates(data: ScheduleManagementColumnProps[], action?: string) {
-        const matches: string[] = [];
-        const nullMatches: string[] = [];
-        const uniqueRows = data.filter(
-            (row, index, self) =>
-                index === self.findIndex((r) => JSON.stringify(r) === JSON.stringify(row))
-        );
-        let newData = uniqueRows;
-        console.log('newData: ', newData);
-        allRows.forEach((item1) => {
-            newData.forEach((item2) => {
-                if (item1.scheduleCode === item2.scheduleCode) {
-                    if (item1.deletedAt !== null) {
-                        nullMatches.push(item1.scheduleCode);
+        const uniqueData = data.filter((row, index, self) => (
+            index === self.findIndex((r) => r.scheduleCode === row.scheduleCode)
+        ));
+        const duplicatedRows: ScheduleManagementColumnProps[] = [];
+        const newlyAddedRows: ScheduleManagementColumnProps[] = [];
+        const softDeletedRows: ScheduleManagementColumnProps[] = [];
+        let filteredData = newlyAddedRows;
 
-                        return;
-                    }
-                    matches.push(item1.scheduleCode);
+        uniqueData.forEach((uniqueRow) => {
+            const existingRow = allRows.find((row) => (
+                row.scheduleCode === uniqueRow.scheduleCode
+            ));
+            console.log('existingRow: ', existingRow);
+            const modifiedActiveRow = allRows.find((row) => (
+                row.scheduleCode === uniqueRow.scheduleCode && uniqueRow.scheduleId !== row.scheduleId
+            ));
+
+            if (action === 'modify' && modifiedActiveRow) {
+                newlyAddedRows.push(uniqueRow);
+            } else if (existingRow) {
+                if (existingRow.deletedAt !== null) {
+                    softDeletedRows.push(existingRow);
+                } else {
+                    duplicatedRows.push(existingRow);
                 }
-            });
+            } else {
+                newlyAddedRows.unshift(uniqueRow);
+            }
         });
 
-        console.log('non: ', matches);
-        console.log('null: ', nullMatches);
+        const duplicatedCounts = duplicatedRows.length;
+        const newlyAddedCounts = newlyAddedRows.length;
+        const softDeletedCounts = softDeletedRows.length;
+        let message = '';
 
-        if (matches.length > 0 || nullMatches.length > 0) {
-            let confirmFilterNull;
-            let confirmFilterNotNull;
-            let finalFilteredData:ScheduleManagementColumnProps[] = [];
-
-            if (nullMatches.length > 0) {
-                confirmFilterNull = window.confirm(
-                    'Duplicates detected.\n\nSome of these duplicates were previously deleted.\n\nDo you want to restore those and filter duplicates before proceeding?'
-                );
-            } else {
-                confirmFilterNotNull = window.confirm(
-                    'Duplicates detected.\n\nDo you want to filter duplicates before proceeding?'
-                );
-            }
+        if (softDeletedCounts > 0) {
+            const confirmFilterNull = window.confirm(
+                'Duplicates of inactive records detected, would you like to restore the match inactive records?'
+            );
 
             if (confirmFilterNull) {
-                const withNulledData = allRows.filter(
-                    (item) =>
-                        !matches.includes(item.scheduleCode)
-            || nullMatches.includes(item.scheduleCode)
-                );
-
-                console.log('withNulledData:', withNulledData);
-
-                let finalFilteredData: ScheduleManagementColumnProps[] = [];
-
                 if (action === 'modify') {
-                    finalFilteredData = withNulledData
-                        .filter((row) =>
-                            newData.some((newItem) => newItem.scheduleId === row.scheduleId))
-                        .map((row) => {
-                            const match = newData.find(
-                                (newItem) => newItem.scheduleId === row.scheduleId
-                            );
-                            return match
-                                ? {
-                                    ...row,
-                                    ...match,
-                                    deletedAt: row.deletedAt
-                                }
-                                : row;
-                        });
-                } else if (action === 'add') {
-                    finalFilteredData = newData
-                        .map((newItem) => {
-                            // Find any matching row in DB (even soft-deleted)
-                            const existing = withNulledData.find(
-                                (row) => row.scheduleCode === newItem.scheduleCode
-                            );
-
-                            // RESTORE: found and is soft-deleted
-                            if (existing && existing.deletedAt !== null) {
-                                console.log('Restoring:', existing.scheduleCode);
-                                return {
-                                    ...existing,
-                                    ...newItem,
-                                    deletedAt: null
-                                };
-                            }
-
-                            // ADD NEW: not found in DB
-                            if (!existing) {
-                                console.log('Adding new:', newItem.scheduleCode);
-                                return {
-                                    ...newItem,
-                                    deletedAt: null
-                                };
-                            }
-
-                            // Already active — skip
-                            return null;
-                        })
-                        .filter(Boolean) as ScheduleManagementColumnProps[];
+                    filteredData = uniqueData;
+                } else {
+                    filteredData = [...softDeletedRows, ...newlyAddedRows];
                 }
-
-                console.log('finalFilteredData:', finalFilteredData);
-
-                return finalFilteredData;
-            } else if (confirmFilterNotNull) {
-                finalFilteredData = newData.filter(
-                    (item) => !matches.includes(item.scheduleCode)
-                );
             }
+        } else if (newlyAddedCounts < 1 && duplicatedCounts > 0) {
+            const confirmReset = window.confirm(
+                'All the new records you entered are duplicates of existing active records. Do you want to reset the form?'
+            );
 
-            if (finalFilteredData.length < 1) {
-                alert('All new rows were duplicates');
+            if (confirmReset) {
                 setAction('isAddRemove', false);
+                setAction('isModify', false);
                 setData('newRowData', []);
+                setData('modifiedRows', []);
                 renderSchedule();
-                return [];
+                filteredData = [];
             }
-
-            newData = finalFilteredData;
         }
-        return newData;
+
+        if (newlyAddedCounts > 0) {
+            if (action === 'add') {
+                message += `${newlyAddedCounts} new records added.`;
+            } else {
+                message += `${newlyAddedCounts + softDeletedCounts} records were modified.`;
+            }
+        }
+        if (duplicatedCounts > 0) {
+            message += `${duplicatedCounts} duplicates of active records ignored.`;
+        }
+        if (softDeletedCounts > 0) {
+            message += `${softDeletedCounts} inactive records were restored.`;
+        }
+
+        return {
+            filteredData,
+            message
+        };
     }
 
     return (

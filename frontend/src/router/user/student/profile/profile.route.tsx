@@ -6,7 +6,7 @@ import gradeRoute from './grade-report.route';
 export default function studentProfileRoute(): RouteObject[] {
     return [
         {
-            path: 'profile/',
+            path: 'profile',
             element: <StudentProfile />,
             children: [
                 ...gradeRoute(),

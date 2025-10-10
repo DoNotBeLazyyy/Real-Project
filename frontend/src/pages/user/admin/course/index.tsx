@@ -33,8 +33,8 @@ export default function AdminCourse() {
     const [selectedTab, setSelectedTab] = useState('Course');
     // User level options
     const tabOptions = [
-        'Course',
         'Schedule',
+        'Course',
         'Department',
         'Program'
     ];
@@ -86,6 +86,7 @@ export default function AdminCourse() {
             <CommonHeader title="Course Management" />
             <GridActionbar<ManagementRowProps>
                 radioOptions={tabOptions}
+                selected={selectedTab}
                 onSubmitClick={handleSubmitClick}
                 setSelected={setSelectedTab}
                 useDataStore={managementStoreMap[selectedTab]}

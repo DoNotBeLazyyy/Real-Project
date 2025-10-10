@@ -1,14 +1,12 @@
 import { DynamicButtonProps, PaginationProps } from '@type/pagination.type';
 import { useMemo } from 'react';
 import PaginationButtons from './PaginationButtons';
-import PaginationInfo from './PaginationInfo';
 import PaginationSizeSelector from './PaginationSizeSelector';
 
 export default function Pagination<T>({
     currentPage,
     gridApi,
     gridData,
-    paginationSize,
     totalPages,
     onUpdatePaginationSize
 }: PaginationProps<T>) {
@@ -91,12 +89,12 @@ export default function Pagination<T>({
     }
 
     return (
-        <div className="flex items-center justify-between w-full">
+        <div className="flex items-center justify-between relative w-full">
             <PaginationSizeSelector
                 gridApi={gridApi}
                 onUpdatePaginationSize={onUpdatePaginationSize}
             />
-            <div className="flex gap-[8px] items-center mx-auto my-[4px]">
+            <div className="absolute flex gap-[8px] items-center justify-center left-[0px] my-[4px] right-[0px]">
                 {paginationButtons.map((btn, btnKey) => (
                     <PaginationButtons
                         key={`${btn.buttonLabel}-${btnKey}`}
@@ -104,12 +102,6 @@ export default function Pagination<T>({
                     />
                 ))}
             </div>
-            <PaginationInfo
-                currentPage={currentPage}
-                gridData={gridData}
-                paginationSize={paginationSize}
-                totalPages={totalPages}
-            />
         </div>
     );
 }

@@ -1,25 +1,24 @@
 import CommonButton from '@components/buttons/CommonButton';
 import ShadowCard from '@components/card/ShadowCard';
-import CommonGroupRadioCheckbox from '@components/checkbox/CommonRadioCheckboxGroup';
+import CommonGroupRadioCheckbox, { CommonGroupRadioCheckboxProps } from '@components/checkbox/CommonRadioCheckboxGroup';
 import { useActionStore } from '@store/useActionStore';
 import { DataStoreHook, StateProps } from '@type/common.type';
 import { classMerge } from '@utils/css.util';
 import { ButtonOptionsProps } from '../../pages/user/admin/account';
 
-export interface GridActionbarProps<TData> {
-    radioOptions: string[];
+export interface GridActionbarProps<TData> extends CommonGroupRadioCheckboxProps {
     onSubmitClick: VoidFunction;
     setSelected: StateProps<string>;
     useDataStore: DataStoreHook<TData>;
 }
 
 export default function GridActionbar<TData>({
-    radioOptions,
     onSubmitClick,
     setSelected,
-    useDataStore
+    useDataStore,
+    ...props
 }: GridActionbarProps<TData>) {
-    const { setData } = useDataStore();
+    const { newRowData, modifiedRows, selectedRowData, setData } = useDataStore();
     const { isAddRemove, isDelete, isModify, setAction } = useActionStore();
     const buttonOptions: ButtonOptionsProps[] = [
         {
@@ -59,6 +58,7 @@ export default function GridActionbar<TData>({
 
     function handleDisableModification() {
         setAction('isModify', false);
+        setData('modifiedRows', []);
     }
 
     function handleEnableAddRemove() {
@@ -90,10 +90,20 @@ export default function GridActionbar<TData>({
     }
 
     function handleSelect(selected: string) {
-        setSelected?.(selected);
-        setAction('isAddRemove', false);
-        setAction('isDelete', false);
-        setAction('isModify', false);
+        if (newRowData.length === 0 && selectedRowData.length === 0 && modifiedRows.length === 0)  {
+            setSelected?.(selected);
+            handleDisableAddRemove();
+            handleDisableDelete();
+            handleDisableModification();
+            return;
+        }
+        const confirmSwitch = window.confirm('If you switch user type now your changes will be discarded, would you like to proceed?');
+        if (confirmSwitch) {
+            setSelected?.(selected);
+            handleDisableAddRemove();
+            handleDisableDelete();
+            handleDisableModification();
+        }
     }
 
     return (
@@ -119,7 +129,7 @@ export default function GridActionbar<TData>({
                     ))}
                 </div>
                 <CommonGroupRadioCheckbox
-                    radioOptions={radioOptions}
+                    {...props}
                     onChangeSelect={handleSelect}
                 />
             </div>

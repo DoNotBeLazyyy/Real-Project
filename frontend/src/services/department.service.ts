@@ -2,6 +2,10 @@ import { CustomAxios } from '@services/index.service';
 import { Answer } from '@type/http';
 import { DepartmentManagementColumnProps } from '@type/management.type';
 
+export function getAllDepartments() {
+    return CustomAxios.get<Answer<DepartmentManagementColumnProps[]>>('/api/department/get');
+}
+
 export function getActiveDepartments() {
     return CustomAxios.get<Answer<DepartmentManagementColumnProps[]>>('/api/department/get', { params: { status: 'active' } });
 }
