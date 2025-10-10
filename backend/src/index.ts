@@ -2,6 +2,7 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
+import { authMiddleware } from './middlewares/logger.middleware.js';
 import accountRouter from './routes/account.route.js';
 import courseRouter from './routes/course.route.js';
 import departmentRouter from './routes/department.route.js';
@@ -23,6 +24,12 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
+
+const publicRoutes = ['/api/account/login', '/api/account/change-password'];
+app.use((req, res, next) => {
+    if (publicRoutes.includes(req.path)) return next();
+    authMiddleware(req, res, next);
+});
 
 // Routes
 app.use('/api/student', studentRouter)

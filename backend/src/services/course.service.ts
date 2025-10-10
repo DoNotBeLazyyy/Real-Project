@@ -10,6 +10,11 @@ const pool = createPool();
 
 export async function getCourses(req: Request, res: Response) {
     const status = req.query.status;
+    const sqlAll = `
+        SELECT *
+        FROM course
+        ORDER BY course_id ASC;
+    `;
     const sqlActive = `
         SELECT
             course_id,
@@ -19,16 +24,6 @@ export async function getCourses(req: Request, res: Response) {
             course_unit
         FROM course
         WHERE deleted_at IS NULL
-        ORDER BY course_id ASC;
-    `;
-    const sqlAll = `
-        SELECT
-            course_id,
-            course_code,
-            course_name,
-            course_description,
-            course_unit
-        FROM course
         ORDER BY course_id ASC;
     `;
     const sql = status === 'active' ? sqlActive : sqlAll;
@@ -52,15 +47,21 @@ export async function getCourses(req: Request, res: Response) {
 
 export async function addCourses(req: Request, res: Response) {
     const courseList: CourseProps[] = req.body;
-    const sql = `
-        INSERT INTO course
-        (
+
+    const addSql = `
+        INSERT INTO course (
             course_code,
             course_name,
             course_description,
             course_unit
         )
-        VALUES ?
+        VALUES (?, ?, ?, ?)
+    `;
+
+    const restoreSql = `
+        UPDATE course
+        SET deleted_at = NULL
+        WHERE course_code = ?
     `;
 
     if (invalidArray(courseList)) {
@@ -75,16 +76,30 @@ export async function addCourses(req: Request, res: Response) {
     }
 
     try {
-        const values = courseList.map(c => [
-            c.courseCode,
-            c.courseName,
-            c.courseDescription ?? null,
-            c.courseUnit ?? null,
-        ]);
+        const addOrRestorePromises = courseList.map(async (c) => {
+            if (c.deletedAt !== null && c.courseId) {
+                await pool.query(restoreSql, [c.courseCode]);
+            } else {
+                const addVals = [
+                    c.courseCode,
+                    c.courseName,
+                    c.courseDescription,
+                    c.courseUnit,
+                ];
+                await pool.query(addSql, addVals);
+            }
+        });
 
-        await pool.query(sql, [values]);
+        await Promise.all(addOrRestorePromises);
 
-        res.json(makeResponse({ result: courseList }));
+        res.json(
+            makeResponse({
+                result: courseList,
+                retCode: 'SUCCESS',
+                retMsg: 'Courses added/restored successfully',
+                status: 200,
+            })
+        );
     } catch (err) {
         res.status(500).json(
             makeResponse({
@@ -99,7 +114,8 @@ export async function addCourses(req: Request, res: Response) {
 
 export async function updateCourses(req: Request, res: Response) {
     const courseList: CourseProps[] = req.body;
-    const sql = `
+
+    const updateSql = `
         UPDATE course
         SET
             course_code = ?,
@@ -108,6 +124,27 @@ export async function updateCourses(req: Request, res: Response) {
             course_unit = ?
         WHERE course_id = ?
     `;
+
+    const emptySql = `
+        UPDATE course
+        SET course_code = ?
+        WHERE course_code = ? AND course_id <> ?
+        LIMIT 1
+    `;
+
+    const deleteSql = `
+        UPDATE course
+        SET deleted_at = NOW()
+        WHERE course_id = ?
+    `;
+
+    const restoreSql = `
+        UPDATE course
+        SET deleted_at = NULL
+        WHERE course_code = ?
+    `;
+
+    let connection;
 
     if (invalidArray(courseList)) {
         return res.status(400).json(
@@ -121,21 +158,49 @@ export async function updateCourses(req: Request, res: Response) {
     }
 
     try {
-        const updatePromises = courseList.map(c => {
-            const values = [
-                c.courseCode,
-                c.courseName,
-                c.courseDescription ?? null,
-                c.courseUnit ?? null,
-                c.courseId,
-            ];
-            return pool.query(sql, values);
-        });
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
 
-        await Promise.all(updatePromises);
+        for (const [idx, c] of courseList.entries()) {
+            const [rows]: any = await connection.query(
+                `SELECT course_code, deleted_at FROM course WHERE course_code = ? AND course_id <> ? LIMIT 1`,
+                [c.courseCode, c.courseId]
+            );
+            const inactiveRow = rows[0];
 
-        res.json(makeResponse({ result: courseList }));
+            if (rows.length > 0 && inactiveRow.deleted_at !== null) {
+                // Restore deleted course
+                await connection.query(deleteSql, [c.courseId]);
+                await connection.query(restoreSql, [inactiveRow.course_code]);
+            } else {
+                // Handle potential duplicate code
+                await connection.query(emptySql, [idx, c.courseCode, c.courseId]);
+
+                // Update course
+                const updateVals = [
+                    c.courseCode,
+                    c.courseName,
+                    c.courseDescription ?? null,
+                    c.courseUnit ?? null,
+                    c.courseId,
+                ];
+                await connection.query(updateSql, updateVals);
+            }
+        }
+
+        await connection.commit();
+
+        res.json(
+            makeResponse({
+                result: courseList,
+                retCode: 'SUCCESS',
+                retMsg: 'Courses updated/restored successfully',
+                status: 200,
+            })
+        );
     } catch (err) {
+        if (connection) await connection.rollback();
+
         res.status(500).json(
             makeResponse({
                 result: [],
@@ -144,6 +209,8 @@ export async function updateCourses(req: Request, res: Response) {
                 status: 500,
             })
         );
+    } finally {
+        if (connection) connection.release();
     }
 }
 

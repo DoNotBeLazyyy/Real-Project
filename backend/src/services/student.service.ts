@@ -1,8 +1,11 @@
+import bcrypt from 'bcrypt';
 import { Request, Response } from 'express';
 import { RowDataPacket } from 'mysql2/promise';
 import createPool from '../db.js';
 import { StudentProps } from '../types/student.type.js';
 import { snakeToCamelArray, invalidArray } from '../utils/array.util.js';
+import { transporter } from '../utils/mailer.js';
+import { generateRandomPassword } from '../utils/password.util.js';
 import { makeResponse } from '../utils/response.util.js';
 
 // Create the pool once and reuse
@@ -61,21 +64,6 @@ export async function getStudents(req: Request, res: Response) {
 
 export async function addStudents(req: Request, res: Response) {
     const studentList: StudentProps[] = req.body;
-    const sql = `
-        INSERT INTO student
-        (
-            address,
-            age,
-            email,
-            first_name,
-            last_name,
-            program,
-            sex,
-            student_number,
-            year_level
-        )
-        VALUES ?
-    `;
 
     if (invalidArray(studentList)) {
         return res.status(400).json(
@@ -88,23 +76,85 @@ export async function addStudents(req: Request, res: Response) {
         );
     }
 
+    const conn = await pool.getConnection();
+
     try {
-        const values = studentList.map(s => [
-            s.address,
-            s.age,
-            s.email,
-            s.firstName,
-            s.lastName,
-            s.program,
-            s.sex,
-            s.studentNumber,
-            s.yearLevel,
-        ]);
+        await conn.beginTransaction();
 
-        await pool.query(sql, [values]);
+        for (const s of studentList) {
+            if (!s.email) continue;
 
-        res.json(makeResponse({ result: studentList }));
+            const cleanStudentNumber = s.studentNumber.replace(/-/g, '');
+            const username = `${s.lastName}${cleanStudentNumber}`;
+            const plainPassword = generateRandomPassword(cleanStudentNumber);
+
+            try {
+                await transporter.sendMail({
+                    from: process.env.MAIL_USER,
+                    to: s.email,
+                    subject: 'Your Student Account Credentials',
+                    html: `
+                        <h2>Welcome to the Student Portal</h2>
+                        <p>Hello <b>${s.firstName} ${s.lastName}</b>,</p>
+                        <p>Your account has been created successfully.</p>
+                        <p><b>Username:</b> ${username}</p>
+                        <p><b>Temporary Password:</b> ${plainPassword}</p>
+                        <p>Please log in and change your password immediately.</p>
+                        <br/>
+                        <p>Regards,<br/>University Admin</p>
+                    `,
+                });
+            } catch (emailError) {
+                console.error(`Email failed for ${s.email}:`, emailError);
+                continue;
+            }
+
+            const hashedPassword = await bcrypt.hash(plainPassword, 10);
+
+            const [accountResult] = await conn.query<RowDataPacket[]>(
+                `
+                INSERT INTO account (username, password, initial_password, user_role)
+                VALUES (?, ?, ?, ?)
+                `,
+                [username, hashedPassword, hashedPassword, 'student']
+            );
+
+            const accountId = (accountResult as any).insertId;
+
+            await conn.query(
+                `
+                INSERT INTO student
+                (address, age, email, first_name, last_name, program, sex, student_number, year_level, account_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `,
+                [
+                    s.address,
+                    s.age,
+                    s.email,
+                    s.firstName,
+                    s.lastName,
+                    s.program,
+                    s.sex,
+                    s.studentNumber,
+                    s.yearLevel,
+                    accountId,
+                ]
+            );
+        }
+
+        await conn.commit();
+        conn.release();
+
+        res.json(
+            makeResponse({
+                result: studentList,
+                retMsg: 'Students with successful emails have been added',
+            })
+        );
     } catch (err) {
+        await conn.rollback();
+        conn.release();
+        console.error(err);
         res.status(500).json(
             makeResponse({
                 result: [],
@@ -115,6 +165,7 @@ export async function addStudents(req: Request, res: Response) {
         );
     }
 }
+
 
 export async function updateStudents(req: Request, res: Response) {
     const studentList: StudentProps[] = req.body;

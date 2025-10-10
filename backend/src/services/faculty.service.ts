@@ -11,6 +11,49 @@ import { makeResponse } from '../utils/response.util.js';
 // Create the pool once and reuse
 const pool = createPool();
 
+export async function getFacultyDetail(req: Request, res: Response) {
+    const username = String(req.query.username);
+
+    const sqlAll = `
+        SELECT
+            f.address,
+            f.age,
+            f.department,
+            f.email,
+            f.faculty_number,
+            f.first_name,
+            f.last_name,
+            f.sex
+        FROM faculty AS f
+        JOIN account AS a ON f.account_id = a.account_id
+        WHERE a.username = ?
+        LIMIT 1
+    `;
+
+    try {
+        const [rows] = await pool.query<RowDataPacket[]>(sqlAll, [username]);
+        if (!rows.length) {
+            return res.status(404).json(makeResponse({
+                result: [],
+                retCode: 'NOT_FOUND',
+                retMsg: 'Faculty not found',
+                status: 404
+            }));
+        }
+        const facultyArray = snakeToCamelArray(rows) as Record<string, any>[];
+        const facultyDetail = facultyArray[0] as FacultyProps;
+
+        res.json(makeResponse({ result: facultyDetail }));
+    } catch (err) {
+        res.status(500).json(makeResponse({
+            result: [],
+            retCode: 'ERROR',
+            retMsg: String(err),
+            status: 500,
+        }));
+    }
+}
+
 export async function getFaculties(req: Request, res: Response) {
     const status = req.query.status;
     const sqlActive = `
@@ -45,7 +88,6 @@ export async function getFaculties(req: Request, res: Response) {
     const sql = status === 'active'
         ? sqlActive
         : sqlAll;
-
 
     try {
         const [rows] = await pool.query<RowDataPacket[]>(sql);
@@ -85,7 +127,6 @@ export async function addFaculties(req: Request, res: Response) {
 
         for (const f of facultyList) {
             if (!f.email) {
-                // Skip faculty without email
                 continue;
             }
 
@@ -93,7 +134,6 @@ export async function addFaculties(req: Request, res: Response) {
             const username = `${f.lastName}${cleanFacultyNumber}`;
             const plainPassword = generateRandomPassword(cleanFacultyNumber);
 
-            // 1️⃣ Send email first
             try {
                 await transporter.sendMail({
                     from: process.env.MAIL_USER,
@@ -112,19 +152,17 @@ export async function addFaculties(req: Request, res: Response) {
                 });
             } catch (emailError) {
                 console.error(`Email failed for ${f.email}:`, emailError);
-                // Skip this faculty without committing anything
                 continue;
             }
 
-            // 2️⃣ Only insert after email succeeds
             const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
             const [accountResult] = await conn.query<RowDataPacket[]>(
                 `
-                INSERT INTO account (username, password, user_role)
-                VALUES (?, ?, 'faculty')
+                INSERT INTO account (username, password, initial_password, user_role)
+                VALUES (?, ?, ?, ?)
                 `,
-                [username, hashedPassword]
+                [username, hashedPassword, hashedPassword, 'faculty']
             );
 
             const accountId = (accountResult as any).insertId;

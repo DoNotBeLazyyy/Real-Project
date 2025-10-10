@@ -1,4 +1,5 @@
 export interface ScheduleProps {
+    academicYear: string;
     courseId: string;
     facultyId: string;
     programId: string;

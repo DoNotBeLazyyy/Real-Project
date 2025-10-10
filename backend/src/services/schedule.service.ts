@@ -17,6 +17,7 @@ export async function getSchedules(req: Request, res: Response) {
     `;
     const sqlActive = `
         SELECT
+            academic_year,
             course_id,
             faculty_id,
             program_id,
@@ -55,6 +56,7 @@ export async function addSchedules(req: Request, res: Response) {
 
     const addSql = `
         INSERT INTO schedule (
+            academic_year,
             course_id,
             faculty_id,
             program_id,
@@ -65,7 +67,7 @@ export async function addSchedules(req: Request, res: Response) {
             semester,
             year_level
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const restoreSql = `
@@ -91,6 +93,7 @@ export async function addSchedules(req: Request, res: Response) {
                 await pool.query(restoreSql, [s.scheduleCode]);
             } else {
                 const addVals = [
+                    s.academicYear,
                     s.courseId,
                     s.facultyId,
                     s.programId,
@@ -133,6 +136,7 @@ export async function updateSchedules(req: Request, res: Response) {
     const updateSql = `
         UPDATE schedule
         SET
+            academic_year = ?,
             course_id = ?,
             faculty_id = ?,
             program_id = ?,
@@ -197,6 +201,7 @@ export async function updateSchedules(req: Request, res: Response) {
                     s.scheduleId
                 ]
                 const updateVals = [
+                    s.academicYear,
                     s.courseId,
                     s.facultyId,
                     s.programId,

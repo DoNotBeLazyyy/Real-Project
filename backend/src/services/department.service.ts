@@ -10,6 +10,11 @@ const pool = createPool();
 
 export async function getDepartments(req: Request, res: Response) {
     const status = req.query.status;
+    const sqlAll = `
+        SELECT *
+        FROM department
+        ORDER BY department_id ASC;
+    `;
     const sqlActive = `
         SELECT
             department_id,
@@ -17,14 +22,6 @@ export async function getDepartments(req: Request, res: Response) {
             department_name
         FROM department
         WHERE deleted_at IS NULL
-        ORDER BY department_id ASC;
-    `;
-    const sqlAll = `
-        SELECT
-            department_id,
-            department_code,
-            department_name
-        FROM department
         ORDER BY department_id ASC;
     `;
     const sql = status === 'active' ? sqlActive : sqlAll;
@@ -48,13 +45,19 @@ export async function getDepartments(req: Request, res: Response) {
 
 export async function addDepartments(req: Request, res: Response) {
     const departmentList: DepartmentProps[] = req.body;
-    const sql = `
-        INSERT INTO department
-        (
+
+    const addSql = `
+        INSERT INTO department (
             department_code,
             department_name
         )
-        VALUES ?
+        VALUES (?, ?)
+    `;
+
+    const restoreSql = `
+        UPDATE department
+        SET deleted_at = NULL
+        WHERE department_code = ?
     `;
 
     if (invalidArray(departmentList)) {
@@ -69,15 +72,31 @@ export async function addDepartments(req: Request, res: Response) {
     }
 
     try {
-        const values = departmentList.map(d => [
-            d.departmentCode,
-            d.departmentName ?? null,
-        ]);
+        const addOrRestorePromises = departmentList.map(async (d) => {
+            if (d.deletedAt !== null && d.departmentId) {
+                // restore soft-deleted department
+                await pool.query(restoreSql, [d.departmentCode]);
+            } else {
+                const addVals = [
+                    d.departmentCode,
+                    d.departmentName ?? null,
+                ];
+                await pool.query(addSql, addVals);
+            }
+        });
 
-        await pool.query(sql, [values]);
+        await Promise.all(addOrRestorePromises);
 
-        res.json(makeResponse({ result: departmentList }));
+        res.json(
+            makeResponse({
+                result: departmentList,
+                retCode: 'SUCCESS',
+                retMsg: 'Departments added/restored successfully',
+                status: 200,
+            })
+        );
     } catch (err) {
+        console.error('Error adding/restoring departments:', err);
         res.status(500).json(
             makeResponse({
                 result: [],
@@ -91,13 +110,35 @@ export async function addDepartments(req: Request, res: Response) {
 
 export async function updateDepartments(req: Request, res: Response) {
     const departmentList: DepartmentProps[] = req.body;
-    const sql = `
+
+    const updateSql = `
         UPDATE department
         SET
             department_code = ?,
             department_name = ?
         WHERE department_id = ?
     `;
+
+    const emptySql = `
+        UPDATE department
+        SET department_code = ?
+        WHERE department_code = ? AND department_id <> ?
+        LIMIT 1
+    `;
+
+    const deleteSql = `
+        UPDATE department
+        SET deleted_at = NOW()
+        WHERE department_id = ?
+    `;
+
+    const restoreSql = `
+        UPDATE department
+        SET deleted_at = NULL
+        WHERE department_code = ?
+    `;
+
+    let connection;
 
     if (invalidArray(departmentList)) {
         return res.status(400).json(
@@ -111,19 +152,44 @@ export async function updateDepartments(req: Request, res: Response) {
     }
 
     try {
-        const updatePromises = departmentList.map(d => {
-            const values = [
-                d.departmentCode,
-                d.departmentName ?? null,
-                d.departmentId,
-            ];
-            return pool.query(sql, values);
-        });
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
 
-        await Promise.all(updatePromises);
+        for (const [idx, d] of departmentList.entries()) {
+            const [rows]: any = await connection.query(
+                `SELECT department_code, deleted_at FROM department WHERE department_code = ? AND department_id <> ? LIMIT 1`,
+                [d.departmentCode, d.departmentId]
+            );
+            const inactiveRow = rows[0];
 
-        res.json(makeResponse({ result: departmentList }));
+            if (rows.length > 0 && inactiveRow.deleted_at !== null) {
+                await connection.query(deleteSql, [d.departmentId]);
+                await connection.query(restoreSql, [inactiveRow.department_code]);
+            } else {
+                await connection.query(emptySql, [idx, d.departmentCode, d.departmentId]);
+
+                const updateVals = [
+                    d.departmentCode,
+                    d.departmentName ?? null,
+                    d.departmentId,
+                ];
+                await connection.query(updateSql, updateVals);
+            }
+        }
+
+        await connection.commit();
+
+        res.json(
+            makeResponse({
+                result: departmentList,
+                retCode: 'SUCCESS',
+                retMsg: 'Departments updated/restored successfully',
+                status: 200,
+            })
+        );
     } catch (err) {
+        if (connection) await connection.rollback();
+
         res.status(500).json(
             makeResponse({
                 result: [],
@@ -132,6 +198,8 @@ export async function updateDepartments(req: Request, res: Response) {
                 status: 500,
             })
         );
+    } finally {
+        if (connection) connection.release();
     }
 }
 
