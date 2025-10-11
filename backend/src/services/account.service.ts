@@ -48,12 +48,12 @@ export async function loginAccount(req: Request, res: Response) {
         };
         const isInitial = account.password === account.initialPassword;
 
-        // const isValid = await bcrypt.compare(password, account.password);
-        // if (!isValid) {
-        //     return res.status(401).json(
-        //         makeResponse({ result: [], retCode: 'ERROR', retMsg: 'Invalid credentials', status: 401 })
-        //     );
-        // }
+        const isValid = await bcrypt.compare(password, account.password);
+        if (!isValid) {
+            return res.status(401).json(
+                makeResponse({ result: [], retCode: 'ERROR', retMsg: 'Invalid credentials', status: 401 })
+            );
+        }
 
         const token = jwt.sign({ username: account.username, role: account.userRole }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 

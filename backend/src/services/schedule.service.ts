@@ -4,6 +4,7 @@ import createPool from '../db.js';
 import { ScheduleProps } from '../types/common-management.type.js';
 import { snakeToCamelArray, invalidArray } from '../utils/array.util.js';
 import { makeResponse } from '../utils/response.util.js';
+import { formatTime } from '../utils/string.util.js';
 
 // Create the pool once and reuse
 const pool = createPool();
@@ -51,9 +52,65 @@ export async function getSchedules(req: Request, res: Response) {
     }
 }
 
+export async function getFacultySchedule(req: Request, res: Response) {
+    const facultyNumber = req.query.facultyNumber as string;
+
+    if (!facultyNumber) {
+        return res.status(400).json(
+            makeResponse({
+                result: [],
+                retCode: 'INVALID_REQUEST',
+                retMsg: 'facultyNumber is required',
+                status: 400,
+            })
+        );
+    }
+
+    const sql = `
+        SELECT
+            c.course_code,
+            c.course_name,
+            s.schedule_days,
+            s.schedule_end_time,
+            s.schedule_id,
+            s.schedule_start_time
+        FROM schedule AS s
+        JOIN faculty AS f ON s.faculty_id = f.faculty_id
+        JOIN course AS c ON s.course_id = c.course_id
+        WHERE
+            f.faculty_number = ? AND
+            s.deleted_at IS NULL
+        ORDER BY s.schedule_id ASC;
+    `;
+
+    try {
+        const [rows] = await pool.query<RowDataPacket[]>(sql, [facultyNumber]);
+
+        const result = rows.map(row => {
+            const schedule = `${row.schedule_days} ${formatTime(row.schedule_start_time)} - ${formatTime(row.schedule_end_time)}`;
+            return {
+                courseCode: row.course_code,
+                courseName: row.course_name,
+                schedule,
+                scheduleId: row.schedule_id
+            };
+        });
+
+        res.json(makeResponse({ result }));
+    } catch (err) {
+        res.status(500).json(
+            makeResponse({
+                result: [],
+                retCode: 'ERROR',
+                retMsg: String(err),
+                status: 500,
+            })
+        );
+    }
+}
+
 export async function addSchedules(req: Request, res: Response) {
     const scheduleList: ScheduleProps[] = req.body;
-
     const addSql = `
         INSERT INTO schedule (
             academic_year,

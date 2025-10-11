@@ -18,16 +18,18 @@ export async function getFacultyDetail(req: Request, res: Response) {
         SELECT
             f.address,
             f.age,
-            f.department,
             f.email,
             f.faculty_number,
             f.first_name,
             f.last_name,
-            f.sex
+            f.sex,
+            d.department_code,
+            d.department_name
         FROM faculty AS f
         JOIN account AS a ON f.account_id = a.account_id
+        JOIN department AS d ON f.department = d.department_id
         WHERE a.username = ?
-        LIMIT 1
+        LIMIT 1;
     `;
 
     try {

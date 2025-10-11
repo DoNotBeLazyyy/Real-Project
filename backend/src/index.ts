@@ -5,6 +5,7 @@ import express from 'express';
 import { authMiddleware } from './middlewares/logger.middleware.js';
 import accountRouter from './routes/account.route.js';
 import courseRouter from './routes/course.route.js';
+import courseworkRouter from './routes/coursework.route.js';
 import departmentRouter from './routes/department.route.js';
 import facultyRouter from './routes/faculty.route.js';
 import programRouter from './routes/program.route.js';
@@ -39,6 +40,7 @@ app.use('/api/course', courseRouter)
 app.use('/api/department', departmentRouter)
 app.use('/api/program', programRouter)
 app.use('/api/account', accountRouter)
+app.use('/api/coursework', courseworkRouter)
 
 // Start server
 app.listen(port, () => {
