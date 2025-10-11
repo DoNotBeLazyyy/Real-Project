@@ -1,5 +1,5 @@
 import CommonInput, { CommonInputProps } from '@components/input/CommonInput';
-import ValidCommonSelect from '@components/select/ValidCommonSelect';
+import CommonSelect from '@components/select/CommonSelect';
 import { UpdateCodeProps } from '@pages/user/admin/course/ScheduleManagement';
 import { useActionStore } from '@store/useActionStore';
 import { SelectProps, UnknownObject } from '@type/common.type';
@@ -61,12 +61,13 @@ export default function NewGridCell<TData>({
     };
 
     if (!isAddRemove && !isModify) {
-        return options?.find(() => rowData[field])?.label ?? rowData[field] as string;
+        const cellValue = String(rowData[field]);
+        return options?.find((o) => String(o.value) === cellValue)?.label ?? cellValue;
     };
 
     if (options) {
         return (
-            <ValidCommonSelect
+            <CommonSelect
                 options={options}
                 value={rowData[field] as string}
                 onChange={handleChange}

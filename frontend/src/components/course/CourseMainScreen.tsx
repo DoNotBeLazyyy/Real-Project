@@ -4,14 +4,13 @@ import notifBellIcon from '@assets/icons/notification-bell-icon.svg';
 import ShadowCard from '@components/card/ShadowCard';
 import CommonHeader from '@components/container/CommonHeader';
 import MainDiv from '@components/container/MainDiv';
-import CourseList from '@pages/user/student/course/CourseList';
-import { usePath } from '@utils/path.util';
-import { useEffect, useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import CourseList from '@components/course/CourseList';
+import { useState } from 'react';
+import { Outlet, useOutlet } from 'react-router-dom';
 
-export default function StudentCourse() {
+export default function CourseMainScreen() {
     // Hooks
-    const { renderOutlet, setBasePath, pathname } = usePath();
+    const outlet = useOutlet();
     // State variables
     const [isGrid, setIsGrid] = useState(false);
     // Icon list
@@ -28,15 +27,11 @@ export default function StudentCourse() {
         }
     ];
 
-    useEffect(() => {
-        setBasePath(pathname);
-    }, []);
-
     function handleToggleDisplay() {
         setIsGrid(!isGrid);
     }
 
-    return renderOutlet
+    return outlet
         ? <Outlet />
         : (
             <MainDiv>

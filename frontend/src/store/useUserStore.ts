@@ -4,7 +4,8 @@ import { persist, StorageValue } from 'zustand/middleware';
 export interface FacultyDetailProps {
     address: string;
     age: string;
-    department: string;
+    departmentCode: string;
+    departmentName: string;
     email: string;
     facultyNumber: string;
     firstName: string;

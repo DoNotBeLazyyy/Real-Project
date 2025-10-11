@@ -1,11 +1,25 @@
-import FacultyCourse from '@pages/user/faculty/course';
+import CourseMainScreen from '@components/course/CourseMainScreen';
+import CourseOverview from '@components/course/CourseOverview';
+import { CourseWorkCreation } from '@components/course/CourseworkCreation';
 import { RouteObject } from 'react-router-dom';
 
-export default function studentCourseRoute(): RouteObject[] {
+export default function facultyCourseRoute(): RouteObject[] {
     return [
         {
             path: 'course',
-            element: <FacultyCourse />
+            element: <CourseMainScreen />,
+            children: [
+                {
+                    element: <CourseOverview />,
+                    path: ':scheduleId',
+                    children: [
+                        {
+                            element: <CourseWorkCreation />,
+                            path: 'course-work-creation'
+                        }
+                    ]
+                }
+            ]
         }
     ];
 }

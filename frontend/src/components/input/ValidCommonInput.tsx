@@ -1,20 +1,23 @@
-import { Controller, UseControllerProps } from 'react-hook-form';
+import { Control, Controller, FieldValues, UseControllerProps } from 'react-hook-form';
 import CommonInput, { CommonInputProps } from './CommonInput';
 
-export interface ValidCommonInputProps extends CommonInputProps, UseControllerProps {
+export interface ValidCommonInputProps<T extends FieldValues = FieldValues> extends CommonInputProps, UseControllerProps<T> {
     isShowError?: boolean;
+    control: Control<T>;
 };
 
 /**
  * ValidCommonInput
  * A reusable input for table cells with consistent styling and validation.
  */
-export default function ValidCommonInput({
+export default function ValidCommonInput<T extends FieldValues = FieldValues>({
     isShowError,
+    control,
     ...props
-}: ValidCommonInputProps) {
+}: ValidCommonInputProps<T>) {
     return (
         <Controller
+            control={control}
             {...props}
             render={({ field, fieldState }) => (
                 <div className="flex flex-col">

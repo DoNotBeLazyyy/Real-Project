@@ -1,47 +1,24 @@
-import { SelectProps } from '@type/common.type';
-import Select, { SingleValue } from 'react-select';
+import { Control, Controller, FieldValues, UseControllerProps } from 'react-hook-form';
+import CommonSelect, { CommonSelectProps } from './CommonSelect';
 
-interface ValidCommonSelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'onChange'> {
-    options?: SelectProps[];
-    value?: string;
-    onChange?: (val: string) => void;
+interface ValidCommonSelectProps<T extends FieldValues = FieldValues> extends UseControllerProps<T>, Omit<CommonSelectProps, 'defaultValue' | 'name'> {
+    control: Control<T>;
 }
 
-export default function ValidCommonSelect({
-    options,
-    value,
-    onChange
-}: ValidCommonSelectProps) {
-
-    function handleSelectChange(selected: SingleValue<SelectProps>) {
-        const value = selected?.value;
-
-        if (value) {
-            onChange?.(value);
-        }
-    }
-
+export function ValidCommonSelect<T extends FieldValues = FieldValues>({
+    control,
+    ...props
+}: ValidCommonSelectProps<T>) {
     return (
-        <Select
-            value={options?.find((o) => o.value === value) ?? options?.[0] ?? null}
-            onChange={handleSelectChange}
-            options={options}
-            className="new_grid_cell w-full"
-            isSearchable={true}
-            menuPortalTarget={document.body}
-            menuPosition="fixed"
-            styles={{
-                menuPortal: (base) => ({
-                    ...base,
-                    zIndex: 9999
-                }),
-                menu: (base) => ({
-                    ...base,
-                    width: 'auto',
-                    minWidth: '100%',
-                    whiteSpace: 'nowrap'
-                })
-            }}
+        <Controller
+            control={control}
+            {...props}
+            render={({ field }) => (
+                <CommonSelect
+                    {...field}
+                    {...props}
+                />
+            )}
         />
     );
 }

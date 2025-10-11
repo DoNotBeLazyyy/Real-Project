@@ -1,11 +1,13 @@
 import messageIcon from '@assets/icons/message-icon.svg';
 import CommonBadge from '@components/badge/CommonBadge';
+import CommonButton from '@components/buttons/CommonButton';
 import DetailCard, { CardStatusProps } from '@components/card/DetailCard';
 import ShadowCard from '@components/card/ShadowCard';
 import CommonHeader from '@components/container/CommonHeader';
 import MainDiv from '@components/container/MainDiv';
+import { useUserStore } from '@store/useUserStore';
 import React from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Outlet, useNavigate, useOutlet, useParams } from 'react-router-dom';
 
 interface TaskProps {
     taskId: string;
@@ -21,8 +23,10 @@ interface CourseOverviewMapProps {
 
 export default function CourseOverview() {
     // Hooks
-    const { courseId } = useParams<{ courseId: string }>();
     const navigate = useNavigate();
+    const outlet = useOutlet();
+    const { userRole } = useUserStore();
+    const { courseId } = useParams<{ courseId: string }>();
     // Custom variables
     const iconMap = [
         {
@@ -142,8 +146,13 @@ export default function CourseOverview() {
         navigate(`/student/course/${courseId}/${taskId}/task`);
     }
 
-    return (
-        <MainDiv>
+    function handleAddCourseWork() {
+        navigate('course-work-creation');
+    }
+
+    return outlet
+        ? <Outlet />
+        : <MainDiv>
             <CommonHeader
                 icons={iconMap}
                 subTitle="ITC-129 LEC (MWF / 8:00AM - 10:00AM)"
@@ -155,7 +164,15 @@ export default function CourseOverview() {
                         <React.Fragment key={courseKey}>
                             <ShadowCard white>
                                 <div className="flex flex-col gap-[16px] min-h-[60px] p-[12px] relative w-full">
-                                    <h1 className="font-[600] leading-[100%] text-[#052554]">{course.period} Period</h1>
+                                    <div className="flex items-center justify-between w-full">
+                                        <h1 className="font-[600] leading-[100%] text-[#052554]">{course.period} Period</h1>
+                                        {userRole === 'faculty' && <CommonButton
+                                            buttonLabel="Add"
+                                            buttonStyle="white"
+                                            isShadowed
+                                            onButtonClick={handleAddCourseWork}
+                                        />}
+                                    </div>
                                     {course.tasks && course.tasks.map((task, taskKey) => (
                                         <div
                                             key={taskKey}
@@ -180,6 +197,5 @@ export default function CourseOverview() {
                     ))}
                 </div>
             </ShadowCard>
-        </MainDiv>
-    );
+        </MainDiv>;
 }

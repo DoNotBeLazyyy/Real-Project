@@ -1,13 +1,13 @@
-import StudentCourse from '@pages/user/student/course';
+import CourseMainScreen from '@components/course/CourseMainScreen';
+import CourseOverview from '@components/course/CourseOverview';
 import CourseTask from '@pages/user/student/course/course-task';
-import CourseOverview from '@pages/user/student/course/CourseOverview';
 import { RouteObject } from 'react-router-dom';
 
 export default function studentCourseRoute(): RouteObject[] {
     return [
         {
             path: 'course',
-            element: <StudentCourse />,
+            element: <CourseMainScreen />,
             children: [
                 {
                     element: <CourseOverview />,

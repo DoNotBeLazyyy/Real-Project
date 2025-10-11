@@ -90,11 +90,7 @@ export default function ChangePassword() {
                                     isShowError
                                     value={i.value}
                                     rules={{
-                                        required: `The ${formatColumnLabel(i.name)} is a required field.`,
-                                        minLength: {
-                                            value: 8,
-                                            message: `${formatColumnLabel(i.name)} must be at least 8 characters long.`
-                                        }
+                                        required: `The ${formatColumnLabel(i.name)} is a required field.`
                                     }}
                                     control={control}
                                     {...i}

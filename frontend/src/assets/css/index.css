@@ -95,8 +95,7 @@ ul, li {
       margin: 0 !important;
     }
 
-    & .ag-header-cell-comp-wrapper,
-    & .ag-cell {
+    & .ag-header-cell-comp-wrapper {
         align-items: center;
         display: flex;
         justify-content: center;
