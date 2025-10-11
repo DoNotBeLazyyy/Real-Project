@@ -3,11 +3,14 @@ import CommonButton from '@components/buttons/CommonButton';
 import ShadowCard from '@components/card/ShadowCard';
 import CommonLabelField from '@components/CommonLabelField';
 import CommonHeader from '@components/container/CommonHeader';
+import ValidDatePicker from '@components/datepicker/ValidDatepicker';
 import ValidFileAttachment from '@components/file/ValidFileAttachment';
 import ValidCommonInput from '@components/input/ValidCommonInput';
 import ValidTextArea from '@components/input/ValidTextArea';
 import { ValidCommonSelect } from '@components/select/ValidCommonSelect';
 import { Typography } from '@mui/material';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { postCoursework } from '@services/coursework.service';
 import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -16,7 +19,8 @@ import { useParams } from 'react-router-dom';
 export interface CourseWorkFormValues {
     scheduleId?: string;
     period: string;
-    time: string;
+    dueTime: string;
+    dueDate: string;
     title: string;
     instruction: string;
     files: File[];
@@ -31,6 +35,10 @@ export const CourseWorkCreation = () => {
     const [attachments, setAttachments] = useState<File[]>([]);
     // Schedule id
     const scheduleId = String(id);
+    // Date today
+    const today = new Date();
+    const formattedToday = today.toISOString()
+        .split('T')[0];
     // Period list
     const periodList = [
         { label: 'Prelim', value: 'prelim' },
@@ -71,7 +79,8 @@ export const CourseWorkCreation = () => {
             files: [],
             instruction: '',
             period: periodList[0].value,
-            time: timeOptions[0].value,
+            dueTime: timeOptions[0].value,
+            dueDate: formattedToday,
             title: ''
         }
     });
@@ -89,12 +98,21 @@ export const CourseWorkCreation = () => {
 
     async function handleCreateCourseWork() {
         const values = methods.getValues();
-        const payload = {
-            ...values,
-            scheduleId: scheduleId
-        };
-        const result = (await postCoursework(payload)).data.result;
-        console.log('result: ', result);
+        const formData = new FormData();
+
+        formData.append('scheduleId', scheduleId);
+        formData.append('period', values.period);
+        formData.append('dueTime', values.dueTime);
+        formData.append('dueDate', values.dueDate);
+        formData.append('title', values.title);
+        formData.append('instruction', values.instruction);
+
+        values.files.forEach((file: File) => {
+            formData.append('files', file);
+        });
+
+        const result = await postCoursework(formData);
+        console.log('result: ', result.data.result);
     }
 
     return (
@@ -105,46 +123,54 @@ export const CourseWorkCreation = () => {
             />
             <ShadowCard>
                 <div className="flex flex-col gap-[20px] p-[12px] w-full">
-                    <form
-                        className="flex flex-col gap-[20px] w-full"
-                        onSubmit={methods.handleSubmit(handleCreateCourseWork)}
-                    >
-                        <CommonLabelField label="Period">
-                            <ValidCommonSelect
-                                name="period"
+                    <LocalizationProvider dateAdapter={AdapterDateFns}>
+                        <form
+                            className="flex flex-col gap-[20px] w-full"
+                            onSubmit={methods.handleSubmit(handleCreateCourseWork)}
+                        >
+                            <CommonLabelField label="Period">
+                                <ValidCommonSelect
+                                    name="period"
+                                    control={control}
+                                    options={periodList}
+                                />
+                            </CommonLabelField>
+                            <CommonLabelField label="Due Date">
+                                <ValidDatePicker
+                                    name="dueDate"
+                                    control={control}
+                                />
+                            </CommonLabelField>
+                            <CommonLabelField label="Due Time">
+                                <ValidCommonSelect
+                                    name="dueTime"
+                                    control={control}
+                                    options={timeOptions}
+                                />
+                            </CommonLabelField>
+                            <CommonLabelField label="Coursework Title">
+                                <ValidCommonInput
+                                    className="p-[10px] w-full"
+                                    control={control}
+                                    name="title"
+                                />
+                            </CommonLabelField>
+                            <CommonLabelField label="Coursework Instruction">
+                                <ValidTextArea
+                                    className="bg-[#FFFFFF] outline-none"
+                                    control={control}
+                                    height={200}
+                                    name="instruction"
+                                />
+                            </CommonLabelField>
+                            <ValidFileAttachment
                                 control={control}
-                                options={periodList}
+                                name="files"
+                                onFileUpload={handleFileAttachment}
                             />
-                        </CommonLabelField>
-                        <CommonLabelField label="Due Time">
-                            <ValidCommonSelect
-                                name="time"
-                                control={control}
-                                options={timeOptions}
-                            />
-                        </CommonLabelField>
-                        <CommonLabelField label="Coursework Title">
-                            <ValidCommonInput
-                                className="p-[10px] w-full"
-                                control={control}
-                                name="title"
-                            />
-                        </CommonLabelField>
-                        <CommonLabelField label="Coursework Instruction">
-                            <ValidTextArea
-                                className="bg-[#FFFFFF] outline-none"
-                                control={control}
-                                height={200}
-                                name="instruction"
-                            />
-                        </CommonLabelField>
-                        <ValidFileAttachment
-                            control={control}
-                            name="files"
-                            onFileUpload={handleFileAttachment}
-                        />
-                        <button ref={submitRef} hidden type="submit" />
-                    </form>
+                            <button ref={submitRef} hidden type="submit" />
+                        </form>
+                    </LocalizationProvider>
 
                     {attachments.length > 0 && (
                         <Typography variant="body2" style={{ marginTop: 8 }}>
