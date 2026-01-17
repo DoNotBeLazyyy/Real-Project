@@ -17,7 +17,7 @@ dotenv.config();
 const port = process.env.PORT;
 
 if (!port) {
-    throw new Error("PORT is not defined in the environment variables!");
+    throw new Error('PORT is not defined in the environment variables!');
 }
 
 const app = express();
@@ -33,14 +33,14 @@ app.use((req, res, next) => {
 });
 
 // Routes
-app.use('/api/student', studentRouter)
-app.use('/api/faculty', facultyRouter)
-app.use('/api/schedule', scheduleRouter)
-app.use('/api/course', courseRouter)
-app.use('/api/department', departmentRouter)
-app.use('/api/program', programRouter)
-app.use('/api/account', accountRouter)
-app.use('/api/coursework', courseworkRouter)
+app.use('/api/student', studentRouter);
+app.use('/api/faculty', facultyRouter);
+app.use('/api/schedule', scheduleRouter);
+app.use('/api/course', courseRouter);
+app.use('/api/department', departmentRouter);
+app.use('/api/program', programRouter);
+app.use('/api/account', accountRouter);
+app.use('/api/coursework', courseworkRouter);
 
 // Start server
 app.listen(port, () => {

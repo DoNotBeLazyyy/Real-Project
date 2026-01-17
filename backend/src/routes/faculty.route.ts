@@ -1,5 +1,7 @@
+import {
+    addFaculties, deleteFaculties, getFaculties, getFacultyDetail, updateFaculties
+} from '@services/faculty.service.js';
 import express from 'express';
-import { addFaculties, deleteFaculties, getFaculties, getFacultyDetail, updateFaculties } from '../services/faculty.service.js';
 
 const facultyRouter = express.Router();
 

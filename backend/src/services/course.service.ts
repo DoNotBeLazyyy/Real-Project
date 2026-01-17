@@ -1,9 +1,9 @@
+import { CourseProps } from '@app-types/course.type.js';
+import { invalidArray } from '@utils/array.util.js';
+import { makeResponse } from '@utils/response.util.js';
 import { Request, Response } from 'express';
 import { RowDataPacket } from 'mysql2/promise';
-import createPool from '../db.js';
-import { CourseProps } from '../types/course.type.js';
-import { snakeToCamelArray, invalidArray } from '../utils/array.util.js';
-import { makeResponse } from '../utils/response.util.js';
+import createPool from 'src/createPool.js';
 
 // Create the pool once and reuse
 const pool = createPool();
@@ -13,35 +13,35 @@ export async function getCourses(req: Request, res: Response) {
     const sqlAll = `
         SELECT *
         FROM course
-        ORDER BY course_id ASC;
+        ORDER BY courseId ASC;
     `;
     const sqlActive = `
         SELECT
-            course_id,
-            course_code,
-            course_name,
-            course_description,
-            course_unit
+            courseId,
+            courseCode,
+            courseName,
+            courseDescription,
+            courseUnit
         FROM course
-        WHERE deleted_at IS NULL
-        ORDER BY course_id ASC;
+        WHERE deletedAt IS NULL
+        ORDER BY courseId ASC;
     `;
     const sql = status === 'active' ? sqlActive : sqlAll;
 
     try {
-        const [rows] = await pool.query<RowDataPacket[]>(sql);
-        const courseList = snakeToCamelArray(rows) as CourseProps[];
+        const [courseList] = await pool.query<RowDataPacket[]>(sql);
 
         res.json(makeResponse({ result: courseList }));
     } catch (err) {
-        res.status(500).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: String(err),
-                status: 500,
-            })
-        );
+        res.status(500)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: String(err),
+                    status: 500
+                })
+            );
     }
 }
 
@@ -50,42 +50,38 @@ export async function addCourses(req: Request, res: Response) {
 
     const addSql = `
         INSERT INTO course (
-            course_code,
-            course_name,
-            course_description,
-            course_unit
+            courseCode,
+            courseName,
+            courseDescription,
+            courseUnit
         )
         VALUES (?, ?, ?, ?)
     `;
 
     const restoreSql = `
         UPDATE course
-        SET deleted_at = NULL
-        WHERE course_code = ?
+        SET deletedAt = NULL
+        WHERE courseCode = ?
     `;
 
     if (invalidArray(courseList)) {
-        return res.status(400).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: 'No course list provided',
-                status: 400,
-            })
-        );
+        return res.status(400)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: 'No course list provided',
+                    status: 400
+                })
+            );
     }
 
     try {
-        const addOrRestorePromises = courseList.map(async (c) => {
+        const addOrRestorePromises = courseList.map(async(c) => {
             if (c.deletedAt !== null && c.courseId) {
                 await pool.query(restoreSql, [c.courseCode]);
             } else {
-                const addVals = [
-                    c.courseCode,
-                    c.courseName,
-                    c.courseDescription,
-                    c.courseUnit,
-                ];
+                const addVals = [c.courseCode, c.courseName, c.courseDescription, c.courseUnit];
                 await pool.query(addSql, addVals);
             }
         });
@@ -97,18 +93,19 @@ export async function addCourses(req: Request, res: Response) {
                 result: courseList,
                 retCode: 'SUCCESS',
                 retMsg: 'Courses added/restored successfully',
-                status: 200,
+                status: 200
             })
         );
     } catch (err) {
-        res.status(500).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: String(err),
-                status: 500,
-            })
-        );
+        res.status(500)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: String(err),
+                    status: 500
+                })
+            );
     }
 }
 
@@ -118,43 +115,44 @@ export async function updateCourses(req: Request, res: Response) {
     const updateSql = `
         UPDATE course
         SET
-            course_code = ?,
-            course_name = ?,
-            course_description = ?,
-            course_unit = ?
-        WHERE course_id = ?
+            courseCode = ?,
+            courseName = ?,
+            courseDescription = ?,
+            courseUnit = ?
+        WHERE courseId = ?
     `;
 
     const emptySql = `
         UPDATE course
-        SET course_code = ?
-        WHERE course_code = ? AND course_id <> ?
+        SET courseCode = ?
+        WHERE courseCode = ? AND courseId <> ?
         LIMIT 1
     `;
 
     const deleteSql = `
         UPDATE course
-        SET deleted_at = NOW()
-        WHERE course_id = ?
+        SET deletedAt = NOW()
+        WHERE courseId = ?
     `;
 
     const restoreSql = `
         UPDATE course
-        SET deleted_at = NULL
-        WHERE course_code = ?
+        SET deletedAt = NULL
+        WHERE courseCode = ?
     `;
 
     let connection;
 
     if (invalidArray(courseList)) {
-        return res.status(400).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: 'No course IDs provided',
-                status: 400,
-            })
-        );
+        return res.status(400)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: 'No course IDs provided',
+                    status: 400
+                })
+            );
     }
 
     try {
@@ -162,28 +160,19 @@ export async function updateCourses(req: Request, res: Response) {
         await connection.beginTransaction();
 
         for (const [idx, c] of courseList.entries()) {
-            const [rows]: any = await connection.query(
-                `SELECT course_code, deleted_at FROM course WHERE course_code = ? AND course_id <> ? LIMIT 1`,
-                [c.courseCode, c.courseId]
-            );
+            const [rows]: any = await connection.query('SELECT courseCode, deletedAt FROM course WHERE courseCode = ? AND courseId <> ? LIMIT 1', [c.courseCode, c.courseId]);
             const inactiveRow = rows[0];
 
-            if (rows.length > 0 && inactiveRow.deleted_at !== null) {
+            if (rows.length > 0 && inactiveRow.deletedAt !== null) {
                 // Restore deleted course
                 await connection.query(deleteSql, [c.courseId]);
-                await connection.query(restoreSql, [inactiveRow.course_code]);
+                await connection.query(restoreSql, [inactiveRow.courseCode]);
             } else {
                 // Handle potential duplicate code
                 await connection.query(emptySql, [idx, c.courseCode, c.courseId]);
 
                 // Update course
-                const updateVals = [
-                    c.courseCode,
-                    c.courseName,
-                    c.courseDescription ?? null,
-                    c.courseUnit ?? null,
-                    c.courseId,
-                ];
+                const updateVals = [c.courseCode, c.courseName, c.courseDescription ?? null, c.courseUnit ?? null, c.courseId];
                 await connection.query(updateSql, updateVals);
             }
         }
@@ -195,20 +184,21 @@ export async function updateCourses(req: Request, res: Response) {
                 result: courseList,
                 retCode: 'SUCCESS',
                 retMsg: 'Courses updated/restored successfully',
-                status: 200,
+                status: 200
             })
         );
     } catch (err) {
         if (connection) await connection.rollback();
 
-        res.status(500).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: String(err),
-                status: 500,
-            })
-        );
+        res.status(500)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: String(err),
+                    status: 500
+                })
+            );
     } finally {
         if (connection) connection.release();
     }
@@ -218,19 +208,20 @@ export async function deleteCourse(req: Request, res: Response) {
     const idList: string[] = req.body.data;
     const sql = `
         UPDATE course
-        SET deleted_at = NOW()
-        WHERE course_id IN (?)
+        SET deletedAt = NOW()
+        WHERE courseId IN (?)
     `;
 
     if (invalidArray(idList)) {
-        return res.status(400).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: 'No course IDs provided',
-                status: 400,
-            })
-        );
+        return res.status(400)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: 'No course IDs provided',
+                    status: 400
+                })
+            );
     }
 
     try {
@@ -238,13 +229,14 @@ export async function deleteCourse(req: Request, res: Response) {
 
         res.json(makeResponse({ result: idList }));
     } catch (err) {
-        res.status(500).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: 'Failed to delete courses',
-                status: 500,
-            })
-        );
+        res.status(500)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: 'Failed to delete courses',
+                    status: 500
+                })
+            );
     }
 }

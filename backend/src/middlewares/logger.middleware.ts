@@ -6,17 +6,19 @@ export function logger(req: Request, _res: Response, next: NextFunction) {
     next();
 }
 
-export function authMiddleware(req: Request, res: Response, next: Function) {
+export function authMiddleware(req: Request, res: Response, next: NextFunction) {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Bearer <token>
 
-    if (!token) return res.status(401).json({ retCode: 'UNAUTHORIZED', retMsg: 'Token missing' });
+    if (!token) return res.status(401)
+        .json({ retCode: 'UNAUTHORIZED', retMsg: 'Token missing' });
 
     try {
         const payload = jwt.verify(token, process.env.JWT_SECRET ?? '');
         (req as any).user = payload; // attach payload to request
         next();
     } catch (err) {
-        return res.status(403).json({ retCode: 'FORBIDDEN', retMsg: 'Invalid token' });
+        return res.status(403)
+            .json({ retCode: 'FORBIDDEN', retMsg: 'Invalid token' });
     }
 }

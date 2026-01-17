@@ -1,5 +1,7 @@
+import {
+    addCoursework, deleteCoursework, getCourseworks, updateCoursework, upload
+} from '@services/coursework.service.js';
 import express from 'express';
-import { addCoursework, deleteCoursework, getCourseworks, updateCoursework, upload } from '../services/coursework.service.js';
 
 const courseworkRouter = express.Router();
 

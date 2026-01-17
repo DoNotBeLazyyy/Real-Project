@@ -1,9 +1,9 @@
+import { ProgramProps } from '@app-types/program.type.js';
+import { invalidArray } from '@utils/array.util.js';
+import { makeResponse } from '@utils/response.util.js';
 import { Request, Response } from 'express';
 import { RowDataPacket } from 'mysql2/promise';
-import createPool from '../db.js';
-import { ProgramProps } from '../types/program.type.js';
-import { snakeToCamelArray, invalidArray } from '../utils/array.util.js';
-import { makeResponse } from '../utils/response.util.js';
+import createPool from 'src/createPool.js';
 
 // Create the pool once and reuse
 const pool = createPool();
@@ -13,34 +13,34 @@ export async function getPrograms(req: Request, res: Response) {
     const sqlAll = `
         SELECT *
         FROM program
-        ORDER BY program_id ASC;
+        ORDER BY programId ASC;
     `;
     const sqlActive = `
         SELECT
-            program_id,
+            programId,
             program_code,
             program_name,
-            department_id
+            departmentId
         FROM program
-        WHERE deleted_at IS NULL
-        ORDER BY program_id ASC;
+        WHERE deletedAt IS NULL
+        ORDER BY programId ASC;
     `;
     const sql = status === 'active' ? sqlActive : sqlAll;
 
     try {
-        const [rows] = await pool.query<RowDataPacket[]>(sql);
-        const programList = snakeToCamelArray(rows) as ProgramProps[];
+        const [programList] = await pool.query<RowDataPacket[]>(sql);
 
         res.json(makeResponse({ result: programList }));
     } catch (err) {
-        res.status(500).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: String(err),
-                status: 500,
-            })
-        );
+        res.status(500)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: String(err),
+                    status: 500
+                })
+            );
     }
 }
 
@@ -50,29 +50,30 @@ export async function addPrograms(req: Request, res: Response) {
         INSERT INTO program (
             program_code,
             program_name,
-            department_id
+            departmentId
         )
         VALUES (?, ?, ?)
     `;
     const restoreSql = `
         UPDATE program
-        SET deleted_at = NULL
+        SET deletedAt = NULL
         WHERE program_code = ?
     `;
 
     if (invalidArray(programList)) {
-        return res.status(400).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: 'No program list provided',
-                status: 400,
-            })
-        );
+        return res.status(400)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: 'No program list provided',
+                    status: 400
+                })
+            );
     }
 
     try {
-        const addOrRestorePromises = programList.map(async (p) => {
+        const addOrRestorePromises = programList.map(async(p) => {
             if (p.deletedAt !== null && p.programId) {
                 await pool.query(restoreSql, [p.programCode]);
             } else {
@@ -88,19 +89,20 @@ export async function addPrograms(req: Request, res: Response) {
                 result: programList,
                 retCode: 'SUCCESS',
                 retMsg: 'Programs added/restored successfully',
-                status: 200,
+                status: 200
             })
         );
     } catch (err) {
         console.error('Error adding/restoring programs:', err);
-        res.status(500).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: String(err),
-                status: 500,
-            })
-        );
+        res.status(500)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: String(err),
+                    status: 500
+                })
+            );
     }
 }
 
@@ -111,37 +113,38 @@ export async function updatePrograms(req: Request, res: Response) {
         SET
             program_code = ?,
             program_name = ?,
-            department_id = ?
-        WHERE program_id = ?
+            departmentId = ?
+        WHERE programId = ?
     `;
     const emptySql = `
         UPDATE program
         SET program_code = ?
-        WHERE program_code = ? AND program_id <> ?
+        WHERE program_code = ? AND programId <> ?
         LIMIT 1
     `;
     const deleteSql = `
         UPDATE program
-        SET deleted_at = NOW()
-        WHERE program_id = ?
+        SET deletedAt = NOW()
+        WHERE programId = ?
     `;
     const restoreSql = `
         UPDATE program
-        SET deleted_at = NULL
+        SET deletedAt = NULL
         WHERE program_code = ?
     `;
 
     let connection;
 
     if (invalidArray(programList)) {
-        return res.status(400).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: 'No program IDs provided',
-                status: 400,
-            })
-        );
+        return res.status(400)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: 'No program IDs provided',
+                    status: 400
+                })
+            );
     }
 
     try {
@@ -149,13 +152,10 @@ export async function updatePrograms(req: Request, res: Response) {
         await connection.beginTransaction();
 
         for (const [idx, p] of programList.entries()) {
-            const [rows]: any = await connection.query(
-                `SELECT program_code, deleted_at FROM program WHERE program_code = ? AND program_id <> ? LIMIT 1`,
-                [p.programCode, p.programId]
-            );
+            const [rows]: any = await connection.query('SELECT program_code, deletedAt FROM program WHERE program_code = ? AND programId <> ? LIMIT 1', [p.programCode, p.programId]);
             const inactiveRow = rows[0];
 
-            if (rows.length > 0 && inactiveRow.deleted_at !== null) {
+            if (rows.length > 0 && inactiveRow.deletedAt !== null) {
                 // restore soft-deleted program
                 await connection.query(deleteSql, [p.programId]);
                 await connection.query(restoreSql, [inactiveRow.program_code]);
@@ -176,20 +176,21 @@ export async function updatePrograms(req: Request, res: Response) {
                 result: programList,
                 retCode: 'SUCCESS',
                 retMsg: 'Programs updated/restored successfully',
-                status: 200,
+                status: 200
             })
         );
     } catch (err) {
         if (connection) await connection.rollback();
 
-        res.status(500).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: String(err),
-                status: 500,
-            })
-        );
+        res.status(500)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: String(err),
+                    status: 500
+                })
+            );
     } finally {
         if (connection) connection.release();
     }
@@ -199,19 +200,20 @@ export async function deleteProgram(req: Request, res: Response) {
     const idList: string[] = req.body.data;
     const sql = `
         UPDATE program
-        SET deleted_at = NOW()
-        WHERE program_id IN (?)
+        SET deletedAt = NOW()
+        WHERE programId IN (?)
     `;
 
     if (invalidArray(idList)) {
-        return res.status(400).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: 'No program IDs provided',
-                status: 400,
-            })
-        );
+        return res.status(400)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: 'No program IDs provided',
+                    status: 400
+                })
+            );
     }
 
     try {
@@ -219,13 +221,14 @@ export async function deleteProgram(req: Request, res: Response) {
 
         res.json(makeResponse({ result: idList }));
     } catch (err) {
-        res.status(500).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: 'Failed to delete programs',
-                status: 500,
-            })
-        );
+        res.status(500)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: 'Failed to delete programs',
+                    status: 500
+                })
+            );
     }
 }

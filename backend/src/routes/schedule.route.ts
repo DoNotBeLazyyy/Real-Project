@@ -1,5 +1,7 @@
+import {
+    addSchedules, deleteSchedule, getFacultySchedule, getSchedules, updateSchedules
+} from '@services/schedule.service.js';
 import express from 'express';
-import { addSchedules, deleteSchedule, getFacultySchedule, getSchedules, updateSchedules } from '../services/schedule.service.js';
 
 const scheduleRouter = express.Router();
 

@@ -1,9 +1,9 @@
+import { DepartmentProps } from '@app-types/department.type.js';
+import { invalidArray } from '@utils/array.util.js';
+import { makeResponse } from '@utils/response.util.js';
 import { Request, Response } from 'express';
 import { RowDataPacket } from 'mysql2/promise';
-import createPool from '../db.js';
-import { DepartmentProps } from '../types/department.type.js';
-import { snakeToCamelArray, invalidArray } from '../utils/array.util.js';
-import { makeResponse } from '../utils/response.util.js';
+import createPool from 'src/createPool.js';
 
 // Create the pool once and reuse
 const pool = createPool();
@@ -13,33 +13,33 @@ export async function getDepartments(req: Request, res: Response) {
     const sqlAll = `
         SELECT *
         FROM department
-        ORDER BY department_id ASC;
+        ORDER BY departmentId ASC;
     `;
     const sqlActive = `
         SELECT
-            department_id,
-            department_code,
-            department_name
+            departmentId,
+            departmentCode,
+            departmentName
         FROM department
-        WHERE deleted_at IS NULL
-        ORDER BY department_id ASC;
+        WHERE deletedAt IS NULL
+        ORDER BY departmentId ASC;
     `;
     const sql = status === 'active' ? sqlActive : sqlAll;
 
     try {
-        const [rows] = await pool.query<RowDataPacket[]>(sql);
-        const departmentList = snakeToCamelArray(rows) as DepartmentProps[];
+        const [departmentList] = await pool.query<RowDataPacket[]>(sql);
 
         res.json(makeResponse({ result: departmentList }));
     } catch (err) {
-        res.status(500).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: String(err),
-                status: 500,
-            })
-        );
+        res.status(500)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: String(err),
+                    status: 500
+                })
+            );
     }
 }
 
@@ -48,39 +48,37 @@ export async function addDepartments(req: Request, res: Response) {
 
     const addSql = `
         INSERT INTO department (
-            department_code,
-            department_name
+            departmentCode,
+            departmentName
         )
         VALUES (?, ?)
     `;
 
     const restoreSql = `
         UPDATE department
-        SET deleted_at = NULL
-        WHERE department_code = ?
+        SET deletedAt = NULL
+        WHERE departmentCode = ?
     `;
 
     if (invalidArray(departmentList)) {
-        return res.status(400).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: 'No department list provided',
-                status: 400,
-            })
-        );
+        return res.status(400)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: 'No department list provided',
+                    status: 400
+                })
+            );
     }
 
     try {
-        const addOrRestorePromises = departmentList.map(async (d) => {
+        const addOrRestorePromises = departmentList.map(async(d) => {
             if (d.deletedAt !== null && d.departmentId) {
                 // restore soft-deleted department
                 await pool.query(restoreSql, [d.departmentCode]);
             } else {
-                const addVals = [
-                    d.departmentCode,
-                    d.departmentName ?? null,
-                ];
+                const addVals = [d.departmentCode, d.departmentName ?? null];
                 await pool.query(addSql, addVals);
             }
         });
@@ -92,19 +90,20 @@ export async function addDepartments(req: Request, res: Response) {
                 result: departmentList,
                 retCode: 'SUCCESS',
                 retMsg: 'Departments added/restored successfully',
-                status: 200,
+                status: 200
             })
         );
     } catch (err) {
         console.error('Error adding/restoring departments:', err);
-        res.status(500).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: String(err),
-                status: 500,
-            })
-        );
+        res.status(500)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: String(err),
+                    status: 500
+                })
+            );
     }
 }
 
@@ -114,41 +113,42 @@ export async function updateDepartments(req: Request, res: Response) {
     const updateSql = `
         UPDATE department
         SET
-            department_code = ?,
-            department_name = ?
-        WHERE department_id = ?
+            departmentCode = ?,
+            departmentName = ?
+        WHERE departmentId = ?
     `;
 
     const emptySql = `
         UPDATE department
-        SET department_code = ?
-        WHERE department_code = ? AND department_id <> ?
+        SET departmentCode = ?
+        WHERE departmentCode = ? AND departmentId <> ?
         LIMIT 1
     `;
 
     const deleteSql = `
         UPDATE department
-        SET deleted_at = NOW()
-        WHERE department_id = ?
+        SET deletedAt = NOW()
+        WHERE departmentId = ?
     `;
 
     const restoreSql = `
         UPDATE department
-        SET deleted_at = NULL
-        WHERE department_code = ?
+        SET deletedAt = NULL
+        WHERE departmentCode = ?
     `;
 
     let connection;
 
     if (invalidArray(departmentList)) {
-        return res.status(400).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: 'No department IDs provided',
-                status: 400,
-            })
-        );
+        return res.status(400)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: 'No department IDs provided',
+                    status: 400
+                })
+            );
     }
 
     try {
@@ -156,23 +156,16 @@ export async function updateDepartments(req: Request, res: Response) {
         await connection.beginTransaction();
 
         for (const [idx, d] of departmentList.entries()) {
-            const [rows]: any = await connection.query(
-                `SELECT department_code, deleted_at FROM department WHERE department_code = ? AND department_id <> ? LIMIT 1`,
-                [d.departmentCode, d.departmentId]
-            );
+            const [rows]: any = await connection.query('SELECT departmentCode, deletedAt FROM department WHERE departmentCode = ? AND departmentId <> ? LIMIT 1', [d.departmentCode, d.departmentId]);
             const inactiveRow = rows[0];
 
-            if (rows.length > 0 && inactiveRow.deleted_at !== null) {
+            if (rows.length > 0 && inactiveRow.deletedAt !== null) {
                 await connection.query(deleteSql, [d.departmentId]);
-                await connection.query(restoreSql, [inactiveRow.department_code]);
+                await connection.query(restoreSql, [inactiveRow.departmentCode]);
             } else {
                 await connection.query(emptySql, [idx, d.departmentCode, d.departmentId]);
 
-                const updateVals = [
-                    d.departmentCode,
-                    d.departmentName ?? null,
-                    d.departmentId,
-                ];
+                const updateVals = [d.departmentCode, d.departmentName ?? null, d.departmentId];
                 await connection.query(updateSql, updateVals);
             }
         }
@@ -184,20 +177,21 @@ export async function updateDepartments(req: Request, res: Response) {
                 result: departmentList,
                 retCode: 'SUCCESS',
                 retMsg: 'Departments updated/restored successfully',
-                status: 200,
+                status: 200
             })
         );
     } catch (err) {
         if (connection) await connection.rollback();
 
-        res.status(500).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: String(err),
-                status: 500,
-            })
-        );
+        res.status(500)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: String(err),
+                    status: 500
+                })
+            );
     } finally {
         if (connection) connection.release();
     }
@@ -207,19 +201,20 @@ export async function deleteDepartment(req: Request, res: Response) {
     const idList: string[] = req.body.data;
     const sql = `
         UPDATE department
-        SET deleted_at = NOW()
-        WHERE department_id IN (?)
+        SET deletedAt = NOW()
+        WHERE departmentId IN (?)
     `;
 
     if (invalidArray(idList)) {
-        return res.status(400).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: 'No department IDs provided',
-                status: 400,
-            })
-        );
+        return res.status(400)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: 'No department IDs provided',
+                    status: 400
+                })
+            );
     }
 
     try {
@@ -227,13 +222,14 @@ export async function deleteDepartment(req: Request, res: Response) {
 
         res.json(makeResponse({ result: idList }));
     } catch (err) {
-        res.status(500).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: 'Failed to delete departments',
-                status: 500,
-            })
-        );
+        res.status(500)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: 'Failed to delete departments',
+                    status: 500
+                })
+            );
     }
 }

@@ -1,12 +1,12 @@
+import { StudentProps } from '@app-types/student.type.js';
+import { invalidArray } from '@utils/array.util.js';
+import { transporter } from '@utils/mailer.js';
+import { generateRandomPassword } from '@utils/password.util.js';
+import { makeResponse } from '@utils/response.util.js';
 import bcrypt from 'bcrypt';
 import { Request, Response } from 'express';
 import { RowDataPacket } from 'mysql2/promise';
-import createPool from '../db.js';
-import { StudentProps } from '../types/student.type.js';
-import { snakeToCamelArray, invalidArray } from '../utils/array.util.js';
-import { transporter } from '../utils/mailer.js';
-import { generateRandomPassword } from '../utils/password.util.js';
-import { makeResponse } from '../utils/response.util.js';
+import createPool from 'src/createPool.js';
 
 // Create the pool once and reuse
 const pool = createPool();
@@ -18,47 +18,47 @@ export async function getStudents(req: Request, res: Response) {
             address,
             age,
             email,
-            first_name,
-            last_name,
+            firstName,
+            lastName,
             program,
             sex,
-            student_id,
-            student_number,
-            year_level
+            studentId,
+            studentNumber,
+            yearLevel
         FROM student
-        WHERE deleted_at IS NULL
-        ORDER BY student_id ASC;
+        WHERE deletedAt IS NULL
+        ORDER BY studentId ASC;
     `;
     const sqlAll = `
         SELECT
             address,
             age,
             email,
-            first_name,
-            last_name,
+            firstName,
+            lastName,
             program,
             sex,
-            student_id,
-            student_number,
-            year_level
+            studentId,
+            studentNumber,
+            yearLevel
         FROM student
-        ORDER BY student_id ASC`;
+        ORDER BY studentId ASC`;
     const sql = status === 'active' ? sqlActive : sqlAll;
 
     try {
-        const [rows] = await pool.query<RowDataPacket[]>(sql);
-        const studentList = snakeToCamelArray(rows) as StudentProps[];
+        const [studentList] = await pool.query<RowDataPacket[]>(sql);
 
         res.json(makeResponse({ result: studentList }));
     } catch (err) {
-        res.status(500).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: String(err),
-                status: 500,
-            })
-        );
+        res.status(500)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: String(err),
+                    status: 500
+                })
+            );
     }
 }
 
@@ -66,14 +66,15 @@ export async function addStudents(req: Request, res: Response) {
     const studentList: StudentProps[] = req.body;
 
     if (invalidArray(studentList)) {
-        return res.status(400).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: 'No student list provided',
-                status: 400,
-            })
-        );
+        return res.status(400)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: 'No student list provided',
+                    status: 400
+                })
+            );
     }
 
     const conn = await pool.getConnection();
@@ -102,7 +103,7 @@ export async function addStudents(req: Request, res: Response) {
                         <p>Please log in and change your password immediately.</p>
                         <br/>
                         <p>Regards,<br/>University Admin</p>
-                    `,
+                    `
                 });
             } catch (emailError) {
                 console.error(`Email failed for ${s.email}:`, emailError);
@@ -113,7 +114,7 @@ export async function addStudents(req: Request, res: Response) {
 
             const [accountResult] = await conn.query<RowDataPacket[]>(
                 `
-                INSERT INTO account (username, password, initial_password, user_role)
+                INSERT INTO account (username, password, initialPassword, userRole)
                 VALUES (?, ?, ?, ?)
                 `,
                 [username, hashedPassword, hashedPassword, 'student']
@@ -124,21 +125,10 @@ export async function addStudents(req: Request, res: Response) {
             await conn.query(
                 `
                 INSERT INTO student
-                (address, age, email, first_name, last_name, program, sex, student_number, year_level, account_id)
+                (address, age, email, firstName, lastName, program, sex, studentNumber, yearLevel, accountId)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 `,
-                [
-                    s.address,
-                    s.age,
-                    s.email,
-                    s.firstName,
-                    s.lastName,
-                    s.program,
-                    s.sex,
-                    s.studentNumber,
-                    s.yearLevel,
-                    accountId,
-                ]
+                [s.address, s.age, s.email, s.firstName, s.lastName, s.program, s.sex, s.studentNumber, s.yearLevel, accountId]
             );
         }
 
@@ -148,24 +138,24 @@ export async function addStudents(req: Request, res: Response) {
         res.json(
             makeResponse({
                 result: studentList,
-                retMsg: 'Students with successful emails have been added',
+                retMsg: 'Students with successful emails have been added'
             })
         );
     } catch (err) {
         await conn.rollback();
         conn.release();
         console.error(err);
-        res.status(500).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: String(err),
-                status: 500,
-            })
-        );
+        res.status(500)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: String(err),
+                    status: 500
+                })
+            );
     }
 }
-
 
 export async function updateStudents(req: Request, res: Response) {
     const studentList: StudentProps[] = req.body;
@@ -175,38 +165,29 @@ export async function updateStudents(req: Request, res: Response) {
             address = ?,
             age = ?,
             email = ?,
-            first_name = ?,
-            last_name = ?,
+            firstName = ?,
+            lastName = ?,
             program = ?,
             sex = ?,
-            year_level = ?
-        WHERE student_id = ?
+            yearLevel = ?
+        WHERE studentId = ?
     `;
 
     if (invalidArray(studentList)) {
-        return res.status(400).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: 'No student IDs provided',
-                status: 400,
-            })
-        );
+        return res.status(400)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: 'No student IDs provided',
+                    status: 400
+                })
+            );
     }
 
     try {
-        const updatePromises = studentList.map(s => {
-            const values = [
-                s.address,
-                s.age,
-                s.email,
-                s.firstName,
-                s.lastName,
-                s.program,
-                s.sex,
-                s.yearLevel,
-                s.studentId,
-            ];
+        const updatePromises = studentList.map((s) => {
+            const values = [s.address, s.age, s.email, s.firstName, s.lastName, s.program, s.sex, s.yearLevel, s.studentId];
             return pool.query(sql, values);
         });
 
@@ -214,14 +195,15 @@ export async function updateStudents(req: Request, res: Response) {
 
         res.json(makeResponse({ result: studentList }));
     } catch (err) {
-        res.status(500).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: String(err),
-                status: 500,
-            })
-        );
+        res.status(500)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: String(err),
+                    status: 500
+                })
+            );
     }
 }
 
@@ -229,19 +211,20 @@ export async function deleteStudent(req: Request, res: Response) {
     const idList: string[] = req.body.data;
     const sql = `
         UPDATE student
-        SET deleted_at = NOW()
-        WHERE student_id IN (?)
+        SET deletedAt = NOW()
+        WHERE studentId IN (?)
     `;
 
     if (invalidArray(idList)) {
-        return res.status(400).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: 'No student IDs provided',
-                status: 400,
-            })
-        );
+        return res.status(400)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: 'No student IDs provided',
+                    status: 400
+                })
+            );
     }
 
     try {
@@ -249,13 +232,14 @@ export async function deleteStudent(req: Request, res: Response) {
 
         res.json(makeResponse({ result: idList }));
     } catch (err) {
-        res.status(500).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: 'Failed to delete students',
-                status: 500,
-            })
-        );
+        res.status(500)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: 'Failed to delete students',
+                    status: 500
+                })
+            );
     }
 }

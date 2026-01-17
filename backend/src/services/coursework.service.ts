@@ -1,9 +1,9 @@
+import { makeResponse } from '@utils/response.util.js';
 import { Request, Response } from 'express';
 import fs from 'fs';
 import multer from 'multer';
 import path from 'path';
-import createPool from '../db.js';
-import { makeResponse } from '../utils/response.util.js';
+import createPool from 'src/createPool.js';
 
 // Reuse pool
 const pool = createPool();
@@ -28,35 +28,30 @@ export async function addCoursework(req: Request, res: Response) {
     console.log('files: ', files);
 
     if (!title || !period) {
-        return res.status(400).json(makeResponse({ result: [], retCode: 'ERROR', retMsg: 'Title and period are required' }));
+        return res.status(400)
+            .json(makeResponse({ result: [], retCode: 'ERROR', retMsg: 'Title and period are required' }));
     }
 
     try {
         // Insert coursework
         const sqlCoursework = `
             INSERT INTO coursework
-            (title, instruction, period, due_date, due_time, schedule_id)
+            (title, instruction, period, dueDate, dueTime, scheduleId)
             VALUES (?, ?, ?, ?, ?, ?)
         `;
         const [courseworkResult]: any = await pool.execute(sqlCoursework, [title, instruction, period, dueDate, dueTime, scheduleId]);
         const courseworkId = courseworkResult.insertId;
 
-        let fileResults: any[] = [];
+        const fileResults: any[] = [];
         if (files && files.length > 0) {
             const sqlAttachment = `
                 INSERT INTO coursework_attachment
-                (coursework_id, file_name, file_path, mime_type, size)
+                (courseworkId, fileName, filePath, mimeType, size)
                 VALUES (?, ?, ?, ?, ?)
             `;
 
             for (const file of files) {
-                await pool.execute(sqlAttachment, [
-                    courseworkId,
-                    file.originalname,
-                    file.path,
-                    file.mimetype,
-                    file.size
-                ]);
+                await pool.execute(sqlAttachment, [courseworkId, file.originalname, file.path, file.mimetype, file.size]);
 
                 fileResults.push({
                     fileName: file.originalname,
@@ -67,22 +62,25 @@ export async function addCoursework(req: Request, res: Response) {
             }
         }
 
-        res.json(makeResponse({
-            result: {
-                courseworkId,
-                title,
-                instruction,
-                period,
-                dueDate,
-                dueTime,
-                scheduleId,
-                files: fileResults
-            },
-            retMsg: 'Coursework added successfully',
-            retCode: 'SUCCESS'
-        }));
+        res.json(
+            makeResponse({
+                result: {
+                    courseworkId,
+                    title,
+                    instruction,
+                    period,
+                    dueDate,
+                    dueTime,
+                    scheduleId,
+                    files: fileResults
+                },
+                retMsg: 'Coursework added successfully',
+                retCode: 'SUCCESS'
+            })
+        );
     } catch (err: any) {
-        res.status(500).json(makeResponse({ result: [], retCode: 'ERROR', retMsg: String(err) }));
+        res.status(500)
+            .json(makeResponse({ result: [], retCode: 'ERROR', retMsg: String(err) }));
     }
 }
 
@@ -92,23 +90,23 @@ export async function getCourseworks(req: Request, res: Response) {
     try {
         const sql = `
             SELECT
-                c.coursework_id,
+                c.courseworkId,
                 c.title,
                 c.instruction,
                 c.period,
-                c.due_date,
-                c.due_time,
-                c.schedule_id,
-                a.attachment_id,
-                a.file_name,
-                a.file_path,
-                a.mime_type,
+                c.dueDate,
+                c.dueTime,
+                c.scheduleId,
+                a.attachmentId,
+                a.fileName,
+                a.filePath,
+                a.mimeType,
                 a.size,
-                a.created_at
+                a.createdAt
             FROM coursework c
             LEFT JOIN coursework_attachment a
-                ON c.coursework_id = a.coursework_id
-            ORDER BY c.coursework_id ASC
+                ON c.courseworkId = a.courseworkId
+            ORDER BY c.courseworkId ASC
         `;
 
         const [rows]: any = await pool.query(sql);
@@ -117,7 +115,7 @@ export async function getCourseworks(req: Request, res: Response) {
         const courseworksMap: Record<number, any> = {};
 
         rows.forEach((row: any) => {
-            const cwId = row.coursework_id;
+            const cwId = row.courseworkId;
 
             if (!courseworksMap[cwId]) {
                 courseworksMap[cwId] = {
@@ -125,21 +123,21 @@ export async function getCourseworks(req: Request, res: Response) {
                     title: row.title,
                     instruction: row.instruction,
                     period: row.period,
-                    dueDate: row.due_date,
-                    dueTime: row.due_time,
-                    scheduleId: row.schedule_id,
+                    dueDate: row.dueDate,
+                    dueTime: row.dueTime,
+                    scheduleId: row.scheduleId,
                     files: []
                 };
             }
 
-            if (row.attachment_id) {
+            if (row.attachmentId) {
                 courseworksMap[cwId].files.push({
-                    attachmentId: row.attachment_id,
-                    fileName: row.file_name,
-                    filePath: row.file_path,
-                    mimeType: row.mime_type,
+                    attachmentId: row.attachmentId,
+                    fileName: row.fileName,
+                    filePath: row.filePath,
+                    mimeType: row.mimeType,
                     size: row.size,
-                    createdAt: row.created_at
+                    createdAt: row.createdAt
                 });
             }
         });
@@ -148,46 +146,51 @@ export async function getCourseworks(req: Request, res: Response) {
 
         res.json(makeResponse({ result: courseworks }));
     } catch (err: any) {
-        res.status(500).json(makeResponse({ result: [], retCode: 'ERROR', retMsg: String(err) }));
+        res.status(500)
+            .json(makeResponse({ result: [], retCode: 'ERROR', retMsg: String(err) }));
     }
 }
 
 // Update coursework
 export async function updateCoursework(req: Request, res: Response) {
-    const { coursework_id, title, instruction, period, due_date, due_time, schedule_id } = req.body;
+    const { courseworkId, title, instruction, period, dueDate, dueTime, scheduleId } = req.body;
 
-    if (!coursework_id) {
-        return res.status(400).json(makeResponse({ result: [], retCode: 'ERROR', retMsg: 'Coursework ID is required' }));
+    if (!courseworkId) {
+        return res.status(400)
+            .json(makeResponse({ result: [], retCode: 'ERROR', retMsg: 'Coursework ID is required' }));
     }
 
     try {
         const sql = `
             UPDATE coursework
-            SET title = ?, instruction = ?, period = ?, due_date = ?, due_time = ?, schedule_id = ?
-            WHERE coursework_id = ?
+            SET title = ?, instruction = ?, period = ?, dueDate = ?, dueTime = ?, scheduleId = ?
+            WHERE courseworkId = ?
         `;
-        const [result] = await pool.execute(sql, [title, instruction, period, due_date, due_time, schedule_id, coursework_id]);
+        const [result] = await pool.execute(sql, [title, instruction, period, dueDate, dueTime, scheduleId, courseworkId]);
 
         res.json(makeResponse({ result, retMsg: 'Coursework updated successfully' }));
     } catch (err: any) {
-        res.status(500).json(makeResponse({ result: [], retCode: 'ERROR', retMsg: String(err) }));
+        res.status(500)
+            .json(makeResponse({ result: [], retCode: 'ERROR', retMsg: String(err) }));
     }
 }
 
 // Delete coursework
 export async function deleteCoursework(req: Request, res: Response) {
-    const { coursework_id } = req.body;
+    const { courseworkId } = req.body;
 
-    if (!coursework_id) {
-        return res.status(400).json(makeResponse({ result: [], retCode: 'ERROR', retMsg: 'Coursework ID is required' }));
+    if (!courseworkId) {
+        return res.status(400)
+            .json(makeResponse({ result: [], retCode: 'ERROR', retMsg: 'Coursework ID is required' }));
     }
 
     try {
-        const sql = `DELETE FROM coursework WHERE coursework_id = ?`;
-        const [result] = await pool.execute(sql, [coursework_id]);
+        const sql = 'DELETE FROM coursework WHERE courseworkId = ?';
+        const [result] = await pool.execute(sql, [courseworkId]);
 
         res.json(makeResponse({ result, retMsg: 'Coursework deleted successfully' }));
     } catch (err: any) {
-        res.status(500).json(makeResponse({ result: [], retCode: 'ERROR', retMsg: String(err) }));
+        res.status(500)
+            .json(makeResponse({ result: [], retCode: 'ERROR', retMsg: String(err) }));
     }
 }

@@ -1,5 +1,5 @@
+import { addCourses, deleteCourse, getCourses, updateCourses } from '@services/course.service.js';
 import express from 'express';
-import { addCourses, deleteCourse, getCourses, updateCourses } from '../services/course.service.js';
 
 const courseRouter = express.Router();
 

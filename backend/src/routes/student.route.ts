@@ -1,5 +1,5 @@
+import { addStudents, deleteStudent, getStudents, updateStudents } from '@services/student.service.js';
 import express from 'express';
-import { addStudents, deleteStudent, getStudents, updateStudents } from '../services/student.service.js';
 
 const studentRouter = express.Router();
 

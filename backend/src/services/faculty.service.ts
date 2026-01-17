@@ -1,12 +1,12 @@
+import { FacultyProps } from '@app-types/faculty.type.js';
+import { invalidArray } from '@utils/array.util.js';
+import { transporter } from '@utils/mailer.js';
+import { generateRandomPassword } from '@utils/password.util.js';
+import { makeResponse } from '@utils/response.util.js';
 import bcrypt from 'bcrypt';
 import { Request, Response } from 'express';
 import { RowDataPacket } from 'mysql2/promise';
-import createPool from '../db.js';
-import { FacultyProps } from '../types/faculty.type.js';
-import { snakeToCamelArray, invalidArray } from '../utils/array.util.js';
-import { transporter } from '../utils/mailer.js';
-import { generateRandomPassword } from '../utils/password.util.js';
-import { makeResponse } from '../utils/response.util.js';
+import createPool from 'src/createPool.js';
 
 // Create the pool once and reuse
 const pool = createPool();
@@ -20,39 +20,44 @@ export async function getFacultyDetail(req: Request, res: Response) {
             f.age,
             f.email,
             f.faculty_number,
-            f.first_name,
-            f.last_name,
+            f.firstName,
+            f.lastName,
             f.sex,
-            d.department_code,
-            d.department_name
+            d.departmentCode,
+            d.departmentName
         FROM faculty AS f
-        JOIN account AS a ON f.account_id = a.account_id
-        JOIN department AS d ON f.department = d.department_id
+        JOIN account AS a ON f.accountId = a.accountId
+        JOIN department AS d ON f.department = d.departmentId
         WHERE a.username = ?
         LIMIT 1;
     `;
 
     try {
-        const [rows] = await pool.query<RowDataPacket[]>(sqlAll, [username]);
-        if (!rows.length) {
-            return res.status(404).json(makeResponse({
-                result: [],
-                retCode: 'NOT_FOUND',
-                retMsg: 'Faculty not found',
-                status: 404
-            }));
+        const [facultyArray] = await pool.query<RowDataPacket[]>(sqlAll, [username]);
+        if (!facultyArray.length) {
+            return res.status(404)
+                .json(
+                    makeResponse({
+                        result: [],
+                        retCode: 'NOT_FOUND',
+                        retMsg: 'Faculty not found',
+                        status: 404
+                    })
+                );
         }
-        const facultyArray = snakeToCamelArray(rows) as Record<string, any>[];
         const facultyDetail = facultyArray[0] as FacultyProps;
 
         res.json(makeResponse({ result: facultyDetail }));
     } catch (err) {
-        res.status(500).json(makeResponse({
-            result: [],
-            retCode: 'ERROR',
-            retMsg: String(err),
-            status: 500,
-        }));
+        res.status(500)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: String(err),
+                    status: 500
+                })
+            );
     }
 }
 
@@ -64,14 +69,14 @@ export async function getFaculties(req: Request, res: Response) {
             age,
             department,
             email,
-            faculty_id,
+            facultyId,
             faculty_number,
-            first_name,
-            last_name,
+            firstName,
+            lastName,
             sex
         FROM faculty
-        WHERE deleted_at IS NULL
-        ORDER BY faculty_id ASC;
+        WHERE deletedAt IS NULL
+        ORDER BY facultyId ASC;
     `;
     const sqlAll = `
         SELECT
@@ -79,32 +84,30 @@ export async function getFaculties(req: Request, res: Response) {
             age,
             department,
             email,
-            faculty_id,
+            facultyId,
             faculty_number,
-            first_name,
-            last_name,
+            firstName,
+            lastName,
             sex
         FROM faculty
-        ORDER BY faculty_id ASC;
+        ORDER BY facultyId ASC;
     `;
-    const sql = status === 'active'
-        ? sqlActive
-        : sqlAll;
+    const sql = status === 'active' ? sqlActive : sqlAll;
 
     try {
-        const [rows] = await pool.query<RowDataPacket[]>(sql);
-        const facultyList = snakeToCamelArray(rows) as FacultyProps[];
+        const [facultyList] = await pool.query<RowDataPacket[]>(sql);
 
         res.json(makeResponse({ result: facultyList }));
     } catch (err) {
-        res.status(500).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: String(err),
-                status: 500,
-            })
-        );
+        res.status(500)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: String(err),
+                    status: 500
+                })
+            );
     }
 }
 
@@ -112,14 +115,15 @@ export async function addFaculties(req: Request, res: Response) {
     const facultyList: FacultyProps[] = req.body;
 
     if (invalidArray(facultyList)) {
-        return res.status(400).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: 'No faculty list provided',
-                status: 400,
-            })
-        );
+        return res.status(400)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: 'No faculty list provided',
+                    status: 400
+                })
+            );
     }
 
     const conn = await pool.getConnection();
@@ -150,7 +154,7 @@ export async function addFaculties(req: Request, res: Response) {
                         <p>Please log in and change your password immediately.</p>
                         <br/>
                         <p>Regards,<br/>University Admin</p>
-                    `,
+                    `
                 });
             } catch (emailError) {
                 console.error(`Email failed for ${f.email}:`, emailError);
@@ -161,7 +165,7 @@ export async function addFaculties(req: Request, res: Response) {
 
             const [accountResult] = await conn.query<RowDataPacket[]>(
                 `
-                INSERT INTO account (username, password, initial_password, user_role)
+                INSERT INTO account (username, password, initialPassword, userRole)
                 VALUES (?, ?, ?, ?)
                 `,
                 [username, hashedPassword, hashedPassword, 'faculty']
@@ -172,20 +176,10 @@ export async function addFaculties(req: Request, res: Response) {
             await conn.query(
                 `
                 INSERT INTO faculty
-                (address, age, department, email, faculty_number, first_name, last_name, sex, account_id)
+                (address, age, department, email, faculty_number, firstName, lastName, sex, accountId)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 `,
-                [
-                    f.address,
-                    f.age,
-                    f.department ?? null,
-                    f.email,
-                    f.facultyNumber,
-                    f.firstName,
-                    f.lastName,
-                    f.sex,
-                    accountId,
-                ]
+                [f.address, f.age, f.department ?? null, f.email, f.facultyNumber, f.firstName, f.lastName, f.sex, accountId]
             );
         }
 
@@ -195,21 +189,22 @@ export async function addFaculties(req: Request, res: Response) {
         res.json(
             makeResponse({
                 result: facultyList,
-                retMsg: 'Faculties with successful emails have been added',
+                retMsg: 'Faculties with successful emails have been added'
             })
         );
     } catch (err) {
         await conn.rollback();
         conn.release();
         console.error(err);
-        res.status(500).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: String(err),
-                status: 500,
-            })
-        );
+        res.status(500)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: String(err),
+                    status: 500
+                })
+            );
     }
 }
 
@@ -222,35 +217,27 @@ export async function updateFaculties(req: Request, res: Response) {
             age = ?,
             department = ?,
             email = ?,
-            first_name = ?,
-            last_name = ?,
+            firstName = ?,
+            lastName = ?,
             sex = ?
-        WHERE faculty_id = ?
+        WHERE facultyId = ?
     `;
 
     if (invalidArray(facultyList)) {
-        return res.status(400).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: 'No faculty IDs provided',
-                status: 400,
-            })
-        );
+        return res.status(400)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: 'No faculty IDs provided',
+                    status: 400
+                })
+            );
     }
 
     try {
-        const updatePromises = facultyList.map(s => {
-            const values = [
-                s.address,
-                s.age,
-                s.department,
-                s.email,
-                s.firstName,
-                s.lastName,
-                s.sex,
-                s.facultyId,
-            ];
+        const updatePromises = facultyList.map((s) => {
+            const values = [s.address, s.age, s.department, s.email, s.firstName, s.lastName, s.sex, s.facultyId];
             return pool.query(sql, values);
         });
 
@@ -258,14 +245,15 @@ export async function updateFaculties(req: Request, res: Response) {
 
         res.json(makeResponse({ result: facultyList }));
     } catch (err) {
-        res.status(500).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: String(err),
-                status: 500,
-            })
-        );
+        res.status(500)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: String(err),
+                    status: 500
+                })
+            );
     }
 }
 
@@ -273,19 +261,20 @@ export async function deleteFaculties(req: Request, res: Response) {
     const idList: string[] = req.body.data;
     const sql = `
         UPDATE faculty
-        SET deleted_at = NOW()
-        WHERE faculty_id IN (?)
+        SET deletedAt = NOW()
+        WHERE facultyId IN (?)
     `;
 
     if (invalidArray(idList)) {
-        return res.status(400).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: 'No faculty IDs provided',
-                status: 400,
-            })
-        );
+        return res.status(400)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: 'No faculty IDs provided',
+                    status: 400
+                })
+            );
     }
 
     try {
@@ -293,13 +282,14 @@ export async function deleteFaculties(req: Request, res: Response) {
 
         res.json(makeResponse({ result: idList }));
     } catch (err) {
-        res.status(500).json(
-            makeResponse({
-                result: [],
-                retCode: 'ERROR',
-                retMsg: String(err),
-                status: 500,
-            })
-        );
+        res.status(500)
+            .json(
+                makeResponse({
+                    result: [],
+                    retCode: 'ERROR',
+                    retMsg: String(err),
+                    status: 500
+                })
+            );
     }
 }
