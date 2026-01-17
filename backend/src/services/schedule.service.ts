@@ -22,11 +22,11 @@ export async function getSchedules(req: Request, res: Response) {
             courseId,
             facultyId,
             programId,
-            schedule_code,
-            schedule_days,
-            schedule_end_time,
+            scheduleCode,
+            scheduleDays,
+            scheduleEndTime,
             scheduleId,
-            schedule_start_time,
+            scheduleStartTime,
             semester,
             yearLevel
         FROM schedule
@@ -71,15 +71,15 @@ export async function getFacultySchedule(req: Request, res: Response) {
         SELECT
             c.courseCode,
             c.courseName,
-            s.schedule_days,
-            s.schedule_end_time,
+            s.scheduleDays,
+            s.scheduleEndTime,
             s.scheduleId,
-            s.schedule_start_time
+            s.scheduleStartTime
         FROM schedule AS s
         JOIN faculty AS f ON s.facultyId = f.facultyId
         JOIN course AS c ON s.courseId = c.courseId
         WHERE
-            f.faculty_number = ? AND
+            f.facultyNumber = ? AND
             s.deletedAt IS NULL
         ORDER BY s.scheduleId ASC;
     `;
@@ -88,7 +88,7 @@ export async function getFacultySchedule(req: Request, res: Response) {
         const [rows] = await pool.query<RowDataPacket[]>(sql, [facultyNumber]);
 
         const result = rows.map((row) => {
-            const schedule = `${row.schedule_days} ${formatTime(row.schedule_start_time)} - ${formatTime(row.schedule_end_time)}`;
+            const schedule = `${row.scheduleDays} ${formatTime(row.scheduleStartTime)} - ${formatTime(row.scheduleEndTime)}`;
             return {
                 courseCode: row.courseCode,
                 courseName: row.courseName,
@@ -119,10 +119,10 @@ export async function addSchedules(req: Request, res: Response) {
             courseId,
             facultyId,
             programId,
-            schedule_code,
-            schedule_days,
-            schedule_end_time,
-            schedule_start_time,
+            scheduleCode,
+            scheduleDays,
+            scheduleEndTime,
+            scheduleStartTime,
             semester,
             yearLevel
         )
@@ -132,7 +132,7 @@ export async function addSchedules(req: Request, res: Response) {
     const restoreSql = `
         UPDATE schedule
         SET deletedAt = NULL
-        WHERE schedule_code = ?
+        WHERE scheduleCode = ?
     `;
 
     if (invalidArray(scheduleList)) {
@@ -190,18 +190,18 @@ export async function updateSchedules(req: Request, res: Response) {
             courseId = ?,
             facultyId = ?,
             programId = ?,
-            schedule_code = ?,
-            schedule_days = ?,
-            schedule_end_time = ?,
-            schedule_start_time = ?,
+            scheduleCode = ?,
+            scheduleDays = ?,
+            scheduleEndTime = ?,
+            scheduleStartTime = ?,
             semester = ?,
             yearLevel = ?
         WHERE scheduleId = ?
     `;
     const emptySql = `
         UPDATE schedule
-        SET schedule_code = ?
-        WHERE schedule_code = ? AND scheduleId <> ?
+        SET scheduleCode = ?
+        WHERE scheduleCode = ? AND scheduleId <> ?
         LIMIT 1
     `;
     const deleteSql = `
@@ -212,7 +212,7 @@ export async function updateSchedules(req: Request, res: Response) {
     const restoreSql = `
         UPDATE schedule
         SET deletedAt = NULL
-        WHERE schedule_code = ?
+        WHERE scheduleCode = ?
     `;
     let connection;
 
@@ -233,11 +233,11 @@ export async function updateSchedules(req: Request, res: Response) {
         await connection.beginTransaction();
 
         for (const [idx, s] of scheduleList.entries()) {
-            const [rows]: any = await connection.query('SELECT schedule_code, deletedAt FROM schedule WHERE schedule_code = ? AND scheduleId <> ? LIMIT 1', [s.scheduleCode, s.scheduleId]);
+            const [rows]: any = await connection.query('SELECT scheduleCode, deletedAt FROM schedule WHERE scheduleCode = ? AND scheduleId <> ? LIMIT 1', [s.scheduleCode, s.scheduleId]);
             const inactiveRow = rows[0];
 
             if (rows.length > 0 && inactiveRow.deletedAt !== null) {
-                const restoreVals = [inactiveRow.schedule_code];
+                const restoreVals = [inactiveRow.scheduleCode];
                 const deleteVals = [s.scheduleId];
 
                 await connection.query(deleteSql, deleteVals);

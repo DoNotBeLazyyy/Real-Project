@@ -19,7 +19,7 @@ export async function getFacultyDetail(req: Request, res: Response) {
             f.address,
             f.age,
             f.email,
-            f.faculty_number,
+            f.facultyNumber,
             f.firstName,
             f.lastName,
             f.sex,
@@ -70,7 +70,7 @@ export async function getFaculties(req: Request, res: Response) {
             department,
             email,
             facultyId,
-            faculty_number,
+            facultyNumber,
             firstName,
             lastName,
             sex
@@ -85,7 +85,7 @@ export async function getFaculties(req: Request, res: Response) {
             department,
             email,
             facultyId,
-            faculty_number,
+            facultyNumber,
             firstName,
             lastName,
             sex
@@ -176,7 +176,7 @@ export async function addFaculties(req: Request, res: Response) {
             await conn.query(
                 `
                 INSERT INTO faculty
-                (address, age, department, email, faculty_number, firstName, lastName, sex, accountId)
+                (address, age, department, email, facultyNumber, firstName, lastName, sex, accountId)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 `,
                 [f.address, f.age, f.department ?? null, f.email, f.facultyNumber, f.firstName, f.lastName, f.sex, accountId]

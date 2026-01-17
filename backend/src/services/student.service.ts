@@ -84,7 +84,6 @@ export async function addStudents(req: Request, res: Response) {
 
         for (const s of studentList) {
             if (!s.email) continue;
-
             const cleanStudentNumber = s.studentNumber.replace(/-/g, '');
             const username = `${s.lastName}${cleanStudentNumber}`;
             const plainPassword = generateRandomPassword(cleanStudentNumber);

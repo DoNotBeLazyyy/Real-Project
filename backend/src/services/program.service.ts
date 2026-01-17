@@ -18,8 +18,8 @@ export async function getPrograms(req: Request, res: Response) {
     const sqlActive = `
         SELECT
             programId,
-            program_code,
-            program_name,
+            programCode,
+            programName,
             departmentId
         FROM program
         WHERE deletedAt IS NULL
@@ -48,8 +48,8 @@ export async function addPrograms(req: Request, res: Response) {
     const programList: ProgramProps[] = req.body;
     const addSql = `
         INSERT INTO program (
-            program_code,
-            program_name,
+            programCode,
+            programName,
             departmentId
         )
         VALUES (?, ?, ?)
@@ -57,7 +57,7 @@ export async function addPrograms(req: Request, res: Response) {
     const restoreSql = `
         UPDATE program
         SET deletedAt = NULL
-        WHERE program_code = ?
+        WHERE programCode = ?
     `;
 
     if (invalidArray(programList)) {
@@ -111,15 +111,15 @@ export async function updatePrograms(req: Request, res: Response) {
     const updateSql = `
         UPDATE program
         SET
-            program_code = ?,
-            program_name = ?,
+            programCode = ?,
+            programName = ?,
             departmentId = ?
         WHERE programId = ?
     `;
     const emptySql = `
         UPDATE program
-        SET program_code = ?
-        WHERE program_code = ? AND programId <> ?
+        SET programCode = ?
+        WHERE programCode = ? AND programId <> ?
         LIMIT 1
     `;
     const deleteSql = `
@@ -130,7 +130,7 @@ export async function updatePrograms(req: Request, res: Response) {
     const restoreSql = `
         UPDATE program
         SET deletedAt = NULL
-        WHERE program_code = ?
+        WHERE programCode = ?
     `;
 
     let connection;
@@ -152,15 +152,15 @@ export async function updatePrograms(req: Request, res: Response) {
         await connection.beginTransaction();
 
         for (const [idx, p] of programList.entries()) {
-            const [rows]: any = await connection.query('SELECT program_code, deletedAt FROM program WHERE program_code = ? AND programId <> ? LIMIT 1', [p.programCode, p.programId]);
+            const [rows]: any = await connection.query('SELECT programCode, deletedAt FROM program WHERE programCode = ? AND programId <> ? LIMIT 1', [p.programCode, p.programId]);
             const inactiveRow = rows[0];
 
             if (rows.length > 0 && inactiveRow.deletedAt !== null) {
                 // restore soft-deleted program
                 await connection.query(deleteSql, [p.programId]);
-                await connection.query(restoreSql, [inactiveRow.program_code]);
+                await connection.query(restoreSql, [inactiveRow.programCode]);
             } else {
-                // handle potential duplicate program_code
+                // handle potential duplicate programCode
                 await connection.query(emptySql, [idx, p.programCode, p.programId]);
 
                 // update program
