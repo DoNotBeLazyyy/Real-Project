@@ -1,4 +1,4 @@
-import { snakeToCamelArray, invalidArray } from '../utils/array.util.js';
+import { invalidArray } from '../utils/array.util.js';
 import { transporter } from '../utils/mailer.js';
 import { generateRandomPassword } from '../utils/password.util.js';
 import { makeResponse } from '../utils/response.util.js';
@@ -26,8 +26,8 @@ export async function getFacultyDetail(req, res) {
         LIMIT 1;
     `;
     try {
-        const [rows] = await pool.query(sqlAll, [username]);
-        if (!rows.length) {
+        const [facultyArray] = await pool.query(sqlAll, [username]);
+        if (!facultyArray.length) {
             return res.status(404)
                 .json(makeResponse({
                 result: [],
@@ -36,7 +36,6 @@ export async function getFacultyDetail(req, res) {
                 status: 404
             }));
         }
-        const facultyArray = snakeToCamelArray(rows);
         const facultyDetail = facultyArray[0];
         res.json(makeResponse({ result: facultyDetail }));
     }
@@ -58,14 +57,14 @@ export async function getFaculties(req, res) {
             age,
             department,
             email,
-            faculty_id,
+            facultyId,
             faculty_number,
             firstName,
             lastName,
             sex
         FROM faculty
         WHERE deletedAt IS NULL
-        ORDER BY faculty_id ASC;
+        ORDER BY facultyId ASC;
     `;
     const sqlAll = `
         SELECT
@@ -73,18 +72,17 @@ export async function getFaculties(req, res) {
             age,
             department,
             email,
-            faculty_id,
+            facultyId,
             faculty_number,
             firstName,
             lastName,
             sex
         FROM faculty
-        ORDER BY faculty_id ASC;
+        ORDER BY facultyId ASC;
     `;
     const sql = status === 'active' ? sqlActive : sqlAll;
     try {
-        const [rows] = await pool.query(sql);
-        const facultyList = snakeToCamelArray(rows);
+        const [facultyList] = await pool.query(sql);
         res.json(makeResponse({ result: facultyList }));
     }
     catch (err) {
@@ -183,7 +181,7 @@ export async function updateFaculties(req, res) {
             firstName = ?,
             lastName = ?,
             sex = ?
-        WHERE faculty_id = ?
+        WHERE facultyId = ?
     `;
     if (invalidArray(facultyList)) {
         return res.status(400)
@@ -217,7 +215,7 @@ export async function deleteFaculties(req, res) {
     const sql = `
         UPDATE faculty
         SET deletedAt = NOW()
-        WHERE faculty_id IN (?)
+        WHERE facultyId IN (?)
     `;
     if (invalidArray(idList)) {
         return res.status(400)

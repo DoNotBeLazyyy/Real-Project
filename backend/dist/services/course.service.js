@@ -1,4 +1,4 @@
-import { snakeToCamelArray, invalidArray } from '../utils/array.util.js';
+import { invalidArray } from '../utils/array.util.js';
 import { makeResponse } from '../utils/response.util.js';
 import createPool from 'src/createPool.js';
 // Create the pool once and reuse
@@ -23,8 +23,7 @@ export async function getCourses(req, res) {
     `;
     const sql = status === 'active' ? sqlActive : sqlAll;
     try {
-        const [rows] = await pool.query(sql);
-        const courseList = snakeToCamelArray(rows);
+        const [courseList] = await pool.query(sql);
         res.json(makeResponse({ result: courseList }));
     }
     catch (err) {

@@ -1,4 +1,4 @@
-import { snakeToCamelArray, invalidArray } from '../utils/array.util.js';
+import { invalidArray } from '../utils/array.util.js';
 import { makeResponse } from '../utils/response.util.js';
 import { formatTime } from '../utils/string.util.js';
 import createPool from 'src/createPool.js';
@@ -13,10 +13,10 @@ export async function getSchedules(req, res) {
     `;
     const sqlActive = `
         SELECT
-            academic_year,
+            academicYear,
             courseId,
-            faculty_id,
-            program_id,
+            facultyId,
+            programId,
             schedule_code,
             schedule_days,
             schedule_end_time,
@@ -30,8 +30,7 @@ export async function getSchedules(req, res) {
     `;
     const sql = status === 'active' ? sqlActive : sqlAll;
     try {
-        const [rows] = await pool.query(sql);
-        const scheduleList = snakeToCamelArray(rows);
+        const [scheduleList] = await pool.query(sql);
         res.json(makeResponse({ result: scheduleList }));
     }
     catch (err) {
@@ -64,7 +63,7 @@ export async function getFacultySchedule(req, res) {
             s.scheduleId,
             s.schedule_start_time
         FROM schedule AS s
-        JOIN faculty AS f ON s.faculty_id = f.faculty_id
+        JOIN faculty AS f ON s.facultyId = f.facultyId
         JOIN course AS c ON s.courseId = c.courseId
         WHERE
             f.faculty_number = ? AND
@@ -98,10 +97,10 @@ export async function addSchedules(req, res) {
     const scheduleList = req.body;
     const addSql = `
         INSERT INTO schedule (
-            academic_year,
+            academicYear,
             courseId,
-            faculty_id,
-            program_id,
+            facultyId,
+            programId,
             schedule_code,
             schedule_days,
             schedule_end_time,
@@ -159,10 +158,10 @@ export async function updateSchedules(req, res) {
     const updateSql = `
         UPDATE schedule
         SET
-            academic_year = ?,
+            academicYear = ?,
             courseId = ?,
-            faculty_id = ?,
-            program_id = ?,
+            facultyId = ?,
+            programId = ?,
             schedule_code = ?,
             schedule_days = ?,
             schedule_end_time = ?,
